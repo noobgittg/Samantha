@@ -52,6 +52,26 @@ async def start(client, message):
             InlineKeyboardButton('💻 𝙊𝙏𝙏 𝙐𝙥𝙙𝙖𝙩𝙚 𝘾𝙝𝙖𝙣𝙣𝙚𝙡 💻', url='https://t.me/mallumovieworldmain1')
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
+        loading_msg = await message.reply("Loading...\n[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0%")
+        progress_bar = [
+            "[🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜] 10%",
+            "[🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜] 20%",
+            "[🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜] 30%",
+            "[🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜] 40%",
+            "[🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜] 50%",
+            "[🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜] 60%",
+            "[🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜] 70%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜] 80%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜] 90%",
+            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩] 100%"
+        ]
+        for frame in progress_bar:
+            await asyncio.sleep(0.1)
+            await loading_msg.edit(f"Loading...\n{frame}")
+        await asyncio.sleep(0.2)
+        await loading_msg.edit("✅ **Welcome to My Interface.**")
+        await asyncio.sleep(1)
+        await loading_msg.delete()
         await message.reply_photo(
             photo=random.choice(PICS),
             caption=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME),
@@ -62,7 +82,6 @@ async def start(client, message):
 
     invite_links = await is_subscribed(client, query=message)
     if AUTH_CHANNEL and len(invite_links) >= 1:
-        #this is written by tg: @programcrasher
         btn = []
         for chnl_num, link in enumerate(invite_links, start=1):
             if chnl_num == 1:
@@ -74,7 +93,7 @@ async def start(client, message):
             else:
                 channel_num = str(chnl_num)+"ᴛʜ"
             btn.append([
-                InlineKeyboardButton(f"❆ Jᴏɪɴ {channel_num} Cʜᴀɴɴᴇʟ ❆", url=link)
+                InlineKeyboardButton(f"❆ Jᴏɪɴ Cʜᴀɴɴᴇʟ {channel_num} ❆", url=link)
             ])
 
         if message.command[1] != "subscribe":

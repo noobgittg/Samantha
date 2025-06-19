@@ -1115,6 +1115,15 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data == "sinfo":
         await query.answer(text=script.SINFO, show_alert=True)
 
+    elif query.data == "esp":
+        await query.answer(text=script.ENG_SPELL, show_alert="true")
+    elif query.data == "msp":
+        await query.answer(text=script.MAL_SPELL, show_alert="true")
+    elif query.data == "hsp":
+        await query.answer(text=script.HIN_SPELL, show_alert="true")
+    elif query.data == "tsp":
+        await query.answer(text=script.TAM_SPELL, show_alert="true")
+
     
     elif query.data == "owner_info":
             btn = [[
@@ -1232,7 +1241,10 @@ async def auto_filter(client, msg, spoll=False):
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:
-                return
+                if settings["spell_check"]:
+                    return await advantage_spell_chok(client, msg)
+                else:
+                    return
         else:
             return
     else:
@@ -1360,6 +1372,80 @@ async def auto_filter(client, msg, spoll=False):
             await message.delete()
     if spoll:
         await msg.message.delete()
+
+
+async def advantage_spell_chok(client, msg):
+    mv_id = msg.id
+    mv_rqst = msg.text
+    reqstr1 = msg.from_user.id if msg.from_user else 0
+    reqstr = await client.get_users(reqstr1)
+    settings = await get_settings(msg.chat.id)
+    query = re.sub(
+        r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
+        "", msg.text, flags=re.IGNORECASE)  # plis contribute some common words
+    query = query.strip() + " movie"
+    try:
+        movies = await get_poster(mv_rqst, bulk=True)
+    except Exception as e:
+        logger.exception(e)
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[
+                 InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
+                 InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
+        ],[
+                 InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
+                 InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
+        ],[
+                 InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
+        ]]
+        
+        k = await msg.reply_text(
+            text=script.SPOLL_NOT_FND, #IN SCRIPT CHANGE DONOT CHANGE CODE
+            reply_markup=InlineKeyboardMarkup(button),
+            reply_to_message_id=msg.id
+        )
+        await asyncio.sleep(15)
+        await k.delete()      
+        return
+    movielist = []
+    if not movies:
+        reqst_gle = mv_rqst.replace(" ", "+")
+        button = [[
+                 InlineKeyboardButton('ᴇɴɢʟɪꜱʜ', 'esp'),
+                 InlineKeyboardButton('ᴍᴀʟᴀʏᴀʟᴀᴍ', 'msp')
+        ],[
+                 InlineKeyboardButton('ʜɪɴᴅɪ', 'hsp'),
+                 InlineKeyboardButton('ᴛᴀᴍɪʟ', 'tsp')
+        ],[
+                 InlineKeyboardButton('Gᴏᴏɢʟᴇ ', url=f"https://www.google.com/search?q={reqst_gle}")
+        ]]   
+        k = await msg.reply_text(
+            text=script.SPOLL_NOT_FND,  #DONOTCHANGE IN THIS CODE PLS CHANGE IN SCRIPT
+            reply_markup=InlineKeyboardMarkup(button),
+            reply_to_message_id=msg.id
+        )
+        await asyncio.sleep(15)
+        await k.delete()
+        return
+    movielist = [movie.get('title') for movie in movies]
+    SPELL_CHECK[mv_id] = movielist
+    btn = [
+        [
+            InlineKeyboardButton(
+                text=movie_name.strip(),
+                callback_data=f"spol#{reqstr1}#{k}",
+            )
+        ]
+        for k, movie_name in enumerate(movielist)
+    ]
+    btn.append([InlineKeyboardButton(text="✘ ᴄʟᴏsᴇ ✘", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+    spell_check_del = await msg.reply_text(
+        text="<b>Sᴘᴇʟʟɪɴɢ Mɪꜱᴛᴀᴋᴇ Bʀᴏ ‼️\n\nᴅᴏɴ'ᴛ ᴡᴏʀʀʏ 😊 Cʜᴏᴏꜱᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ᴏɴᴇ ʙᴇʟᴏᴡ 👇</b>",
+        reply_markup=InlineKeyboardMarkup(btn),
+        reply_to_message_id=msg.id
+    )
+    await asyncio.sleep(11)
+    await spell_check_del.delete()
 
 
 async def manual_filters(client, message, text=False):

@@ -54,24 +54,6 @@ async def start(client, message):
             InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
          ]]
         reply_markup = InlineKeyboardMarkup(buttons)
-        loading_msg = await message.reply("Loading...\n[⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜] 0%")
-        progress_bar = [
-            "[🟩⬜⬜⬜⬜⬜⬜⬜⬜⬜] 10%",
-            "[🟩🟩⬜⬜⬜⬜⬜⬜⬜⬜] 20%",
-            "[🟩🟩🟩⬜⬜⬜⬜⬜⬜⬜] 30%",
-            "[🟩🟩🟩🟩⬜⬜⬜⬜⬜⬜] 40%",
-            "[🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜] 50%",
-            "[🟩🟩🟩🟩🟩🟩⬜⬜⬜⬜] 60%",
-            "[🟩🟩🟩🟩🟩🟩🟩⬜⬜⬜] 70%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩⬜⬜] 80%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩⬜] 90%",
-            "[🟩🟩🟩🟩🟩🟩🟩🟩🟩🟩] 100%"
-        ]
-        for frame in progress_bar:
-            await asyncio.sleep(0.1)
-            await loading_msg.edit(f"Loading...\n{frame}")
-        await asyncio.sleep(0.2)
-        await loading_msg.delete()
         await message.reply_photo(
             photo=random.choice(PICS),
             caption=script.START_TXT.format(message.from_user.mention, temp.U_NAME, temp.B_NAME),

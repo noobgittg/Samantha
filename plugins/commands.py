@@ -69,8 +69,6 @@ async def start(client, message):
             await asyncio.sleep(0.1)
             await loading_msg.edit(f"Loading...\n{frame}")
         await asyncio.sleep(0.2)
-        await loading_msg.edit("✅ **Welcome to My Interface.**")
-        await asyncio.sleep(1)
         await loading_msg.delete()
         await message.reply_photo(
             photo=random.choice(PICS),

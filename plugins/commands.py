@@ -125,7 +125,7 @@ async def start(client, message):
                 with open(file) as file_data:
                     msgs=json.loads(file_data.read())
             except:
-                await sts.edit("Fᴀɪʟᴇᴅ")
+                await sts.edit("FAILED")
                 return await client.send_message(LOG_CHANNEL, "Uɴᴀʙʟᴇ Tᴏ Oᴘᴇɴ Fɪʟᴇ.")
             os.remove(file)
             BATCH_FILES[file_id] = msgs
@@ -142,7 +142,7 @@ async def start(client, message):
             if f_caption is None:
                 f_caption = f"{title}"
             try:
-                await client.send_cached_media(
+                m = await client.send_cached_media(
                     chat_id=message.from_user.id,
                     file_id=msg.get("file_id"),
                     caption=f_caption,
@@ -155,11 +155,16 @@ async def start(client, message):
                        ]
                         ]
                     )
-                )
+                    )
+                k = await message.reply_text("<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie Files/Videos will be deleted in <b><u>30 mins</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this ALL Files/Videos to your Saved Messages and Start Download there</i></b>")
+                await asyncio.sleep(1800)
+                await m.delete()
+                await k.edit("<b>Your File/Video is successfully deleted!!!</b>")
+                return
             except FloodWait as e:
                 await asyncio.sleep(e.x)
                 logger.warning(f"Floodwait of {e.x} sec.")
-                await client.send_cached_media(
+                m = await client.send_cached_media(
                     chat_id=message.from_user.id,
                     file_id=msg.get("file_id"),
                     caption=f_caption,
@@ -172,7 +177,12 @@ async def start(client, message):
                        ]
                         ]
                     )
-                )
+                    )
+                k = await message.reply_text("<b><u>❗️❗️❗️IMPORTANT❗️️❗️❗️</u></b>\n\nThis Movie Files/Videos will be deleted in <b><u>30 mins</u> 🫥 <i></b>(Due to Copyright Issues)</i>.\n\n<b><i>Please forward this ALL Files/Videos to your Saved Messages and Start Download there</i></b>")
+                await asyncio.sleep(1800)
+                await m.delete()
+                await k.edit("<b>Your File/Video is successfully deleted!!!</b>")
+                return
             except Exception as e:
                 logger.warning(e, exc_info=True)
                 continue
@@ -180,7 +190,7 @@ async def start(client, message):
         await sts.delete()
         return
     elif data.split("-", 1)[0] == "DSTORE":
-        sts = await message.reply("<b>Pʟᴇᴀsᴇ ᴡᴀɪᴛ...</b>")
+        sts = await message.reply("Please wait")
         b_string = data.split("-", 1)[1]
         decoded = (base64.urlsafe_b64decode(b_string + "=" * (-len(b_string) % 4))).decode("ascii")
         try:
@@ -223,7 +233,7 @@ async def start(client, message):
                     continue
             await asyncio.sleep(1) 
         return await sts.delete()
-
+        
     elif data.split("-", 1)[0] == "verify":
         userid = data.split("-", 2)[1]
         token = data.split("-", 3)[2]
@@ -261,6 +271,7 @@ async def start(client, message):
                 text="<b>Iɴᴠᴀʟɪᴅ ʟɪɴᴋ ᴏʀ Exᴘɪʀᴇᴅ ʟɪɴᴋ !</b>",
                 protect_content=True if PROTECT_CONTENT else False
             )
+        
 
     files_ = await get_file_details(file_id)           
     if not files_:

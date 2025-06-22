@@ -1610,21 +1610,23 @@ async def auto_ffilter(client, msg, spoll=False):
             )
     else:
         btn.append(
-            [InlineKeyboardButton(text="𝐍𝐎 𝐌𝐎𝐑𝐄 𝐏𝐀𝐆𝐄𝐒 𝐀𝐕𝐀𝐈𝐋𝐀𝐁𝐋𝐄",callback_data="pages")]
+            [InlineKeyboardButton(text="1/1",callback_data="pages")]
         )
-    fuk = await message.reply_photo(photo=NOR_IMG, caption=cap, reply_markup=InlineKeyboardMarkup(btn))
-        try:
-            if settings['auto_delete']:
-                await asyncio.sleep(600)
-                await fuk.delete()
-                await message.delete()
-        except KeyError:
+    cap = f"<b>Hᴇʏ {message.from_user.mention}, Hᴇʀᴇ ɪs Wʜᴀᴛ I Fᴏᴜɴᴅ Iɴ Mʏ Dᴀᴛᴀʙᴀsᴇ Fᴏʀ Yᴏᴜʀ Qᴜᴇʀʏ {search}.</b>"
+    fuk = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
+    try:
+        if settings['auto_delete']:
+            await asyncio.sleep(600)
+            await fuk.delete()
+            await message.delete()
+    except KeyError:
             await save_group_settings(message.chat.id, 'auto_delete', True)
             await asyncio.sleep(600)
             await fuk.delete()
             await message.delete()
     if spoll:
         await msg.message.delete()
+
 
 
 async def advantage_spell_chok(client, msg):

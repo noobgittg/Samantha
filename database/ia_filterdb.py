@@ -99,7 +99,7 @@ async def save_file(media):
 
 
 
-async def get_search_results(query, file_type=None, max_results=8, offset=0, filter=False):
+async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
     query = query.strip()
 
     if not query:
@@ -123,9 +123,9 @@ async def get_search_results(query, file_type=None, max_results=8, offset=0, fil
         filter_query['file_type'] = file_type
     
     tasks = [
-        Media.find(filter_query).sort('$natural', -1).to_list(length=max_results),
-        Media2.find(filter_query).sort('$natural', -1).to_list(length=max_results),
-    ]
+        Media.find(filter_query).sort('$natural', -1).to_list(length=25),
+        Media2.find(filter_query).sort('$natural', -1).to_list(length=25),
+        ]
 
     files_media, files_media2 = await asyncio.gather(*tasks)
     

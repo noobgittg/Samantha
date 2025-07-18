@@ -480,7 +480,7 @@ async def advantage_spoll_choker(bot, query):
     files, offset, total_results = await get_search_results(movie, offset=0, filter=True)
     if files:
         k = (movie, files, offset, total_results)
-        await auto_filter(bot, query, k)
+        await auto_ffilter(bot, query, k)
     else:
         reqstr1 = query.from_user.id if query.from_user else 0
         reqstr = await bot.get_users(reqstr1)

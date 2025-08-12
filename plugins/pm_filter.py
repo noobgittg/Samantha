@@ -37,7 +37,7 @@ SPELL_CHECK = {}
 
 @Client.on_message(filters.group | filters.private & filters.text & filters.incoming) #GIVE FILTER IN PM BRO IDEA OF GOUTHAM SER
 async def give_filter(client, message):
-    k = await auto_filter(client, message)
+    k = await auto_ffilter(client, message)
     return
 
 @Client.on_callback_query(filters.regex(r"^next"))

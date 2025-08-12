@@ -242,7 +242,12 @@ Nᴀᴍᴇ - {}"""
 
 𝗠𝗲𝘀𝘀𝗮𝗴𝗲 <b>: {}</b>"""
 
-    CAPTION = """<pre><b>@KnMoviez {file_name} </b></pre>"""
+    CAPTION = """<b>{filename}
+
+Kannada Movie SearchBot - @KnSearchBoT
+All Language Movies SearchBot - @KnMoviezX_BoT
+Join Our Main Channel
+https://t.me/KnMoviez</b>"""
 
     IMDB_TEMPLATE_TXT = """
 <b>Query: {query}

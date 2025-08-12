@@ -136,22 +136,23 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 • /deletefiles - <code>Tᴏ ᴅᴇʟᴇᴛᴇ CᴀᴍRɪᴘ ᴀɴᴅ PʀᴇDVD Fɪʟᴇs ғʀᴏᴍ ᴛʜᴇ ʙᴏᴛ's ᴅᴀᴛᴀʙᴀsᴇ.</code>"""
 
     STATUS_TXT = """
-<b>📊 Bᴏᴛ Sᴛᴀᴛᴜs 📊</b>
+<b>━━━ BOT STATUS ━━━</b>
 
-<b>🔥 Tᴏᴛᴀʟ Fɪʟᴇs Fʀᴏᴍ Bᴏᴛʜ DBs:</b> <code>{}</code>
-<b>👥 Bᴏᴛ Usᴇʀs ᴀɴᴅ Cʜᴀᴛs Cᴏᴜɴᴛ:</b>
-  ★ <b>👤 Tᴏᴛᴀʟ Usᴇʀs:</b> <code>{}</code>
-  ★ <b>💬 Tᴏᴛᴀʟ Cʜᴀᴛs:</b> <code>{}</code>
+<b>• Total Files (Both DBs):</b> <code>{}</code>
 
-<b>💾 Pʀɪᴍᴀʀʏ Dᴀᴛᴀʙᴀsᴇ Sᴛᴀᴛɪsᴛɪᴄs:</b>
-  ★ <b>📁 Tᴏᴛᴀʟ Fɪʟᴇs:</b> <code>{}</code>
-  ★ <b>📈 Usᴇᴅ Sᴛᴏʀᴀɢᴇ:</b> <code>{} MB</code>
-  ★ <b>📉 Fʀᴇᴇ Sᴛᴏʀᴀɢᴇ:</b> <code>{} MB</code>
+<b>• Users & Chats:</b>
+    ├─ <b>Total Users:</b> <code>{}</code>
+    └─ <b>Total Chats:</b> <code>{}</code>
 
-<b>💾 Sᴇᴄᴏɴᴅᴀʀʏ Dᴀᴛᴀʙᴀsᴇ Sᴛᴀᴛɪsᴛɪᴄs:</b>
-  ★ <b>📁 Tᴏᴛᴀʟ Fɪʟᴇs:</b> <code>{}</code>
-  ★ <b>📈 Usᴇᴅ Sᴛᴏʀᴀɢᴇ:</b> <code>{} MB</code>
-  ★ <b>📉 Fʀᴇᴇ Sᴛᴏʀᴀɢᴇ:</b> <code>{} MB</code>
+<b>• Primary Database:</b>
+    ├─ <b>Total Files:</b> <code>{}</code>
+    ├─ <b>Used Storage:</b> <code>{} MB</code>
+    └─ <b>Free Storage:</b> <code>{} MB</code>
+
+<b>• Secondary Database:</b>
+    ├─ <b>Total Files:</b> <code>{}</code>
+    ├─ <b>Used Storage:</b> <code>{} MB</code>
+    └─ <b>Free Storage:</b> <code>{} MB</code>
 """
 
     LOG_TEXT_G = """#NewGroup

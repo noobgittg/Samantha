@@ -1444,20 +1444,27 @@ async def cb_handler(client: Client, query: CallbackQuery):
     await query.answer(MSG_ALRT)
 
 
-    
-async def auto_ffilter(client, msg, spoll=False):
+async def auto_ffilter(client: Client, msg: Message, spoll: bool = False):
     reqstr1 = msg.from_user.id if msg.from_user else 0
-    reqstr = await client.get_users(reqstr1)
+    reqstr = await client.get_users(reqstr1)  # noqa: reqstr not used yet
+
     if not spoll:
         message = msg
-        settings = await get_settings(message.chat.id)
-        if message.text.startswith("/"): return  # ignore commands
-        if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
+        settings = await get_settings(message.chat.id)  # ensure get_settings() is defined elsewhere
+
+        if message.text and message.text.startswith("/"):
             return
-        if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
+
+        if message.text and re.findall(r"((^/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
+            return
+
+        if message.text and re.search(
+            r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b',
+            message.text
+        ):
             await message.delete()
             return
-        if len(message.text) < 50:
+        if len(message.text) < 100:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:

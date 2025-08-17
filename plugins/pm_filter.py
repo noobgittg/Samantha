@@ -827,7 +827,9 @@ async def cb_handler(client: Client, query: CallbackQuery):
             ],[
             InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
             InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
-         ]]
+            ],[
+            InlineKeyboardButton("𝗗𝗼𝗻𝗮𝘁𝗲 𝗧𝗼 𝗠𝗲 ❤️", callback_data="donate")
+        ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.edit_text(
             text=script.START_TXT.format(query.from_user.mention, temp.U_NAME, temp.B_NAME),
@@ -876,7 +878,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         )
         reply_markup = InlineKeyboardMarkup(btn)
         await query.message.edit_text(
-            text=(script.SHORTLINK_INFO),
+            text=script.DONATE,
             reply_markup=reply_markup,
             parse_mode=enums.ParseMode.HTML
         )

@@ -45,7 +45,15 @@ Take a peek at the instructions below and let’s try again! 👇🏼
 
     CHK_MOV_ALRT = "♻️ Eᴅᴀᴀ Mᴏɴᴇʜ ᴄʜᴇᴄᴋɪɴɢ ꜰɪʟᴇ ᴏɴ ᴍʏ ᴅᴀᴛᴀʙᴀꜱᴇ... ♻️"
 
-    DONATE_TXT = " "
+    DONATE_TXT = """<b>🙏 Support Us With Your Donation 🙏
+
+Every Contribution Helps Us Grow And Keep This Project Alive.
+You Can Donate Easily Through Phonepe | UPI.
+
+📌 Scan This Qr To Pay Through Phonepe
+🔗 UPI ID: <code>nandureigns06@axl</code>
+
+Thank you for your support ❤️</b>"""
 
     OLD_MES = "Eᴅᴀᴀ Mᴏɴᴇʜ, 𝐘𝐨𝐮 𝐚𝐫𝐞 𝐮𝐬𝐢𝐧𝐠 𝐨𝐧𝐞 𝐨𝐟 𝐦𝐲 𝐨𝐥𝐝 𝐦𝐞𝐬𝐬𝐚𝐠𝐞𝐬 🤔. 𝐏𝐥𝐞𝐚𝐬𝐞 𝐬𝐞𝐧𝐝 𝐭𝐡𝐞 𝐫𝐞𝐪𝐮𝐞𝐬𝐭 𝐚𝐠𝐚𝐢𝐧."
 

@@ -255,20 +255,21 @@ Nᴀᴍᴇ - {}"""
 
     CAPTION = """<b>{file_name}</b>
 
-✨ <b>Kannada Movie Search Bot</b> – <a href="https://t.me/KnSearchBoT">@KnSearchBoT</a>  
-🌍 <b>All Language Movies Bot</b> – <a href="https://t.me/KnMoviezX_BoT">@KnMoviezX_BoT</a>  
+🎬 <b>Kannada Movie Search Bot</b> – <a href="https://t.me/KnSearchBoT">@KnSearchBoT</a>  
+🌐 <b>All Language Movies Bot</b> – <a href="https://t.me/KnMoviezX_BoT">@KnMoviezX_BoT</a>  
 
 📢 <b>Join Our Main Channel</b>  
 <a href="https://t.me/KnMoviez">🔗 Click Here</a>
 """
 
     IMDB_TEMPLATE_TXT = """
-<b>Query: {query}
-IMDb Data:
+<b>🔎 Query:</b> {query}  
+<b>📊 IMDb Data:</b>  
 
-🏷 Title: <a href={url}>{title}</a>
-🎭 Genres: {genres}
-📆 Year: <a href={url}/releaseinfo>{year}</a></b>"""
+🏷 <b>Title:</b> <a href={url}>{title}</a>  
+🎭 <b>Genres:</b> {genres}  
+📆 <b>Year:</b> <a href={url}/releaseinfo>{year}</a>
+"""
     
     ALL_FILTERS = """
 <b>Hᴇʏ {}, Tʜᴇsᴇ ᴀʀᴇ ᴍʏ ᴛʜʀᴇᴇ ᴛʏᴘᴇs ᴏғ ғɪʟᴛᴇʀs.</b>"""

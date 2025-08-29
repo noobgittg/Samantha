@@ -1469,13 +1469,7 @@ async def auto_filter(client, msg, spoll=False):
     if not spoll:
         message = msg
         settings = await get_settings(message.chat.id)
-        if message.text.startswith("/"): return  # ignore commands
-        if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
-            return
-        if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
-            await message.delete()
-            return
-        if len(message.text) < 50:
+        if len(message.text) < 100:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:
@@ -1591,11 +1585,10 @@ async def auto_filter(client, msg, spoll=False):
             btn.append(
                 [InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key}_{offset}")]
             )
-    else:
-        btn.append(
-            [InlineKeyboardButton(text="1/1",callback_data="pages")]
-        )
-    cap = f"<b>Hᴇʏ {message.from_user.mention}, Hᴇʀᴇ ɪs Wʜᴀᴛ I Fᴏᴜɴᴅ Iɴ Mʏ Dᴀᴛᴀʙᴀsᴇ Fᴏʀ Yᴏᴜʀ Qᴜᴇʀʏ {search}.</b>"
+    #else:
+        #btn.append([InlineKeyboardButton(text="1/1",callback_data="pages")])
+    
+    cap = f"<b>✨ Hᴇʏ {message.from_user.mention}, I Fᴏᴜɴᴅ Sᴏᴍᴇ Rᴇꜱᴜʟᴛ Iɴ Mʏ Dᴀᴛᴀʙᴀꜱᴇ Fᴏʀ Yᴏᴜʀ Qᴜᴇʀʏ 『 {search} 』 ✨</b>"
     fuk = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
     try:
         if settings['auto_delete']:

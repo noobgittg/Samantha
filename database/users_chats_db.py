@@ -121,14 +121,23 @@ class Database:
             'imdb': IMDB,
             'spell_check': SPELL_CHECK_REPLY,
             'welcome': MELCOW_NEW_USERS,
-            'template': IMDB_TEMPLATE,
             'auto_delete': AUTO_DELETE,
-            'auto_ffilter': AUTO_FFILTER
+            'auto_ffilter': AUTO_FFILTER,
+            'max_btn': MAX_BTN,
+            'template': IMDB_TEMPLATE,
+            'shortlink': SHORTLINK_URL,
+            'shortlink_api': SHORTLINK_API,
+            'is_shortlink': IS_SHORTLINK
         }
         chat = await self.grp.find_one({'id':int(id)})
         if chat:
             return chat.get('settings', default)
+        else:
+            chat = await self.grp2.find_one({'id':int(id)})
+            if chat:
+                return chat.get('settings', default)
         return default
+    
     
 
     async def disable_chat(self, chat, reason="No Reason"):

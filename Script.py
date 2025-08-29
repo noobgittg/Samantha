@@ -146,23 +146,23 @@ Cᴏᴍᴍᴀɴᴅs Aɴᴅ Usᴀɢᴇ:
 • /deletefiles - <code>Tᴏ ᴅᴇʟᴇᴛᴇ CᴀᴍRɪᴘ ᴀɴᴅ PʀᴇDVD Fɪʟᴇs ғʀᴏᴍ ᴛʜᴇ ʙᴏᴛ's ᴅᴀᴛᴀʙᴀsᴇ.</code>"""
 
     STATUS_TXT = """
-<b>━━━ BOT STATUS ━━━</b>
+<b>✨ BOT 𝒮𝓉𝒶𝓉𝓊𝓈 ✨</b>
 
-<b>• Total Files (Both DBs):</b> <code>{}</code>
+<b>📂 𝐓𝐨𝐭𝐚𝐥 𝐅𝐢𝐥𝐞𝐬 (Both DBs):</b> <code>{}</code>
 
-<b>• Users & Chats:</b>
-    ├─ <b>Total Users:</b> <code>{}</code>
-    └─ <b>Total Chats:</b> <code>{}</code>
+<b>👥 𝐔𝐬𝐞𝐫𝐬 ＆ 𝐂𝐡𝐚𝐭𝐬</b>
+<b>🙍‍♂️ 𝐓𝐨𝐭𝐚𝐥 𝐔𝐬𝐞𝐫𝐬:</b> <code>{}</code>  
+<b>💬 𝐓𝐨𝐭𝐚𝐥 𝐂𝐡𝐚𝐭𝐬:</b> <code>{}</code>
 
-<b>• Primary Database:</b>
-    ├─ <b>Total Files:</b> <code>{}</code>
-    ├─ <b>Used Storage:</b> <code>{} MB</code>
-    └─ <b>Free Storage:</b> <code>{} MB</code>
+<b>💾 𝐏𝐫𝐢𝐦𝐚𝐫𝐲 𝐃𝐚𝐭𝐚𝐛𝐚𝐬𝐞</b>  
+<b>📁 𝐓𝐨𝐭𝐚𝐥 𝐅𝐢𝐥𝐞𝐬:</b> <code>{}</code>  
+<b>📊 𝐔𝐬𝐞𝐝 𝐒𝐭𝐨𝐫𝐚𝐠𝐞:</b> <code>{} MB</code>  
+<b>📉 𝐅𝐫𝐞𝐞 𝐒𝐭𝐨𝐫𝐚𝐠𝐞:</b> <code>{} MB</code>  
 
-<b>• Secondary Database:</b>
-    ├─ <b>Total Files:</b> <code>{}</code>
-    ├─ <b>Used Storage:</b> <code>{} MB</code>
-    └─ <b>Free Storage:</b> <code>{} MB</code>
+<b>🗄️ 𝐒𝐞𝐜𝐨𝐧𝐝𝐚𝐫𝐲 𝐃𝐚𝐭𝐚𝐛𝐚𝐬𝐞</b>  
+<b>📁 𝐓𝐨𝐭𝐚𝐥 𝐅𝐢𝐥𝐞𝐬:</b> <code>{}</code>  
+<b>📊 𝐔𝐬𝐞𝐝 𝐒𝐭𝐨𝐫𝐚𝐠𝐞:</b> <code>{} MB</code>  
+<b>📉 𝐅𝐫𝐞𝐞 𝐒𝐭𝐨𝐫𝐚𝐠𝐞:</b> <code>{} MB</code>  
 """
 
     LOG_TEXT_G = """#NewGroup

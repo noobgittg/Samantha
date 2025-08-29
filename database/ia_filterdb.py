@@ -123,8 +123,8 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
         filter_query['file_type'] = file_type
     
     tasks = [
-        Media.find(filter_query).sort('$natural', -1).to_list(length=250),
-        Media2.find(filter_query).sort('$natural', -1).to_list(length=250),
+        Media.find(filter_query).sort('$natural', -1).to_list(length=100),
+        Media2.find(filter_query).sort('$natural', -1).to_list(length=0),
         ]
 
     files_media, files_media2 = await asyncio.gather(*tasks)

@@ -132,10 +132,6 @@ class Database:
         chat = await self.grp.find_one({'id':int(id)})
         if chat:
             return chat.get('settings', default)
-        else:
-            chat = await self.grp2.find_one({'id':int(id)})
-            if chat:
-                return chat.get('settings', default)
         return default
     
     

@@ -1,19 +1,12 @@
 import logging
-import logging.config
 import aiohttp 
 import asyncio
-
-# Get logging configurations
-logging.config.fileConfig('logging.conf')
-logging.getLogger().setLevel(logging.INFO)
-logging.getLogger("pyrogram").setLevel(logging.ERROR)
-logging.getLogger("imdbpy").setLevel(logging.ERROR)
 
 from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
 from database.ia_filterdb import Media, Media2, choose_mediaDB, db as clientDB
 from database.users_chats_db import db
-from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_STR, LOG_CHANNEL, SECONDDB_URI
+from info import SESSION, API_ID, API_HASH, BOT_TOKEN, LOG_CHANNEL, SECONDDB_URI
 from utils import temp
 from typing import Union, Optional, AsyncGenerator
 from pyrogram import types
@@ -22,19 +15,21 @@ from datetime import date, datetime
 import pytz
 
 from plugins.webcode import bot_run
-from os import environ
 from aiohttp import web as webserver
 from sample_info import tempDict
+
+# Setup basic logging
+logging.basicConfig(format="%(asctime)s - %(message)s", level=logging.INFO)
 
 async def keep_alive():
     async with aiohttp.ClientSession() as session:
         while True:
             try:
-                await session.get("https://adequate-quail-filterbotkn-818b00d4.koyeb.app/")  # Uses the imported URL from info.py
-                logging.info("Working.")
+                await session.get("https://adequate-quail-filterbotkn-818b00d4.koyeb.app/")
+                logging.info("💚 Keep-alive ping successful.")
             except Exception as e:
-                logging.error(f"Error Occurred : {e}")
-            await asyncio.sleep(4)
+                logging.error(f"⚠️ Keep-alive failed: {e}")
+            await asyncio.sleep(45)
 
 class Bot(Client):
 
@@ -50,47 +45,54 @@ class Bot(Client):
         )
 
     async def start(self):
+        logging.info("🚀 Starting bot...")
         b_users, b_chats = await db.get_banned()
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
         await super().start()
+
+        logging.info("📂 Ensuring database indexes...")
         await Media.ensure_indexes()
         await Media2.ensure_indexes()
-        #choose the right db by checking the free space
+
         stats = await clientDB.command('dbStats')
-        #calculating the free db space from bytes to MB
-        free_dbSize = round(512-((stats['dataSize']/(1024*1024))+(stats['indexSize']/(1024*1024))), 2)
-        if SECONDDB_URI and free_dbSize<10: #if the primary db have less than 10MB left, use second DB.
+        free_dbSize = round(512 - ((stats['dataSize']/(1024*1024)) + (stats['indexSize']/(1024*1024))), 2)
+        if SECONDDB_URI and free_dbSize < 10:
             tempDict["indexDB"] = SECONDDB_URI
-            logging.info(f"Since Primary DB have only {free_dbSize} MB left, Secondary DB will be used to store datas.")
+            logging.info(f"🗄️ Primary DB low ({free_dbSize} MB) → Switching to Secondary DB.")
         elif SECONDDB_URI is None:
-            logging.error("Missing second DB URI !\n\nAdd SECONDDB_URI now !\n\nExiting...")
+            logging.error("❌ Missing SECONDDB_URI! Exiting...")
             exit()
         else:
-            logging.info(f"Since primary DB have enough space ({free_dbSize}MB) left, It will be used for storing datas.")
+            logging.info(f"🗄️ Primary DB OK ({free_dbSize} MB). Using Primary DB.")
+
         await choose_mediaDB()
         me = await self.get_me()
         temp.ME = me.id
         temp.U_NAME = me.username
         temp.B_NAME = me.first_name
         self.username = '@' + me.username
-        logging.info(f"{me.first_name} with for Pyrogram v{__version__} (Layer {layer}) started on {me.username}.")
-        logging.info(LOG_STR)
+
+        logging.info(f"🤖 Bot: {me.first_name} | Pyrogram v{__version__} (Layer {layer}) | @{me.username}")
+
         tz = pytz.timezone('Asia/Kolkata')
         today = date.today()
         now = datetime.now(tz)
         time = now.strftime("%H:%M:%S %p")
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
+        
+        logging.info("🌐 Starting keep-alive task...")
         asyncio.create_task(keep_alive())
         
         client = webserver.AppRunner(await bot_run())
         await client.setup()
         bind_address = "0.0.0.0"
         await webserver.TCPSite(client, bind_address, 8080).start()
+        logging.info("✅ Web server running on port 8080.")
 
     async def stop(self, *args):
         await super().stop()
-        logging.info("Bot stopped. Bye.")
+        logging.info("🛑 Bot stopped. Bye.")
 
     async def iter_messages(
         self,
@@ -98,29 +100,6 @@ class Bot(Client):
         limit: int,
         offset: int = 0,
     ) -> Optional[AsyncGenerator["types.Message", None]]:
-        """Iterate through a chat sequentially.
-        This convenience method does the same as repeatedly calling :meth:`~pyrogram.Client.get_messages` in a loop, thus saving
-        you from the hassle of setting up boilerplate code. It is useful for getting the whole chat messages with a
-        single call.
-        Parameters:
-            chat_id (``int`` | ``str``):
-                Unique identifier (int) or username (str) of the target chat.
-                For your personal cloud (Saved Messages) you can simply use "me" or "self".
-                For a contact that exists in your Telegram address book you can use his phone number (str).
-                
-            limit (``int``):
-                Identifier of the last message to be returned.
-                
-            offset (``int``, *optional*):
-                Identifier of the first message to be returned.
-                Defaults to 0.
-        Returns:
-            ``Generator``: A generator yielding :obj:`~pyrogram.types.Message` objects.
-        Example:
-            .. code-block:: python
-                for message in app.iter_messages("pyrogram", 1, 15000):
-                    print(message.text)
-        """
         current = offset
         while True:
             new_diff = min(200, limit - current)

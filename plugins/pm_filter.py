@@ -39,9 +39,8 @@ SPELL_CHECK = {}
 
 @Client.on_message(filters.text & filters.incoming)
 async def give_filter(client, message):
-    k = await manual_filters(client, message)
-    if not k:
-        await auto_filter(client, message) 
+    k = await auto_ffilter(client, message)
+    return
 
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):

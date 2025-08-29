@@ -39,7 +39,7 @@ SPELL_CHECK = {}
 
 @Client.on_message(filters.text & filters.incoming)
 async def give_filter(client, message):
-    k = await auto_ffilter(client, message)
+    k = await auto_filter(client, message)
     return
 
 @Client.on_callback_query(filters.regex(r"^next"))
@@ -1464,7 +1464,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     await query.answer(MSG_ALRT)
 
 
-async def auto_ffilter(client, msg, spoll=False):
+async def auto_filter(client, msg, spoll=False):
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
     if not spoll:
@@ -1476,7 +1476,7 @@ async def auto_ffilter(client, msg, spoll=False):
         if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
             await message.delete()
             return
-        if len(message.text) < 100:
+        if len(message.text) < 50:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:

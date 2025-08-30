@@ -1476,7 +1476,7 @@ async def auto_ffilter(client, msg, spoll=False):
         if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
             await message.delete()
             return
-        if len(message.text) < 30:
+        if len(message.text) < 100:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:
@@ -1494,40 +1494,14 @@ async def auto_ffilter(client, msg, spoll=False):
         settings = await get_settings(message.chat.id)
     temp.SEND_ALL_TEMP[message.from_user.id] = files
     temp.KEYWORD[message.from_user.id] = search
-    if 'is_shortlink' in settings.keys():
-        ENABLE_SHORTLINK = settings['is_shortlink']
-    else:
-        await save_group_settings(message.chat.id, 'is_shortlink', False)
-        ENABLE_SHORTLINK = False
+    
     pre = 'filep' if settings['file_secure'] else 'file'
-    if ENABLE_SHORTLINK and settings["button"]:
+
+    if settings["button"]:
         btn = [
             [
                 InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {file.file_name}", url=await get_shortlink(message.chat.id, f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
-                ),
-            ]
-            for file in files
-        ]
-    elif ENABLE_SHORTLINK and not settings["button"]:
-        btn = [
-            [
-                InlineKeyboardButton(
-                    text=f"{file.file_name}",
-                    url=await get_shortlink(message.chat.id, f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
-                ),
-                InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}",
-                    url=await get_shortlink(message.chat.id, f"https://telegram.me/{temp.U_NAME}?start=files_{file.file_id}")
-                ),
-            ]
-            for file in files
-        ]
-    elif settings["button"] and not ENABLE_SHORTLINK:
-        btn = [
-            [
-                InlineKeyboardButton(
-                    text=f"[{get_size(file.file_size)}] {file.file_name}", callback_data=f'{pre}#{file.file_id}'
+                    text=f"【{get_size(file.file_size)}】 {file.file_name}", callback_data=f'{pre}#{file.file_id}'
                 ),
             ]
             for file in files
@@ -1540,40 +1514,41 @@ async def auto_ffilter(client, msg, spoll=False):
                     callback_data=f'{pre}#{file.file_id}',
                 ),
                 InlineKeyboardButton(
-                    text=f"{get_size(file.file_size)}",
+                    text=f"【{get_size(file.file_size)}】",
                     callback_data=f'{pre}#{file.file_id}',
                 ),
             ]
             for file in files
         ]
+
     try:
         if settings['auto_delete']:
             btn.insert(0, 
                 [
-                    InlineKeyboardButton(f'ɪɴꜰᴏ', 'reqinfo'),
-                    InlineKeyboardButton(f'ᴍᴏᴠɪᴇ', 'minfo'),
-                    InlineKeyboardButton(f'ꜱᴇʀɪᴇꜱ', 'sinfo')
+                    InlineKeyboardButton("ℹ️ 𝐈𝐍𝐅𝐎", 'reqinfo'),
+                    InlineKeyboardButton("🎬 𝐌𝐎𝐕𝐈𝐄", 'minfo'),
+                    InlineKeyboardButton("📺 𝐒𝐄𝐑𝐈𝐄𝐒", 'sinfo')
                 ]
             )
         else:
             btn.insert(0, 
                 [
-                    InlineKeyboardButton(f'ᴍᴏᴠɪᴇ', 'minfo'),
-                    InlineKeyboardButton(f'ꜱᴇʀɪᴇꜱ', 'sinfo')
+                    InlineKeyboardButton("🎬 𝐌𝐎𝐕𝐈𝐄", 'minfo'),
+                    InlineKeyboardButton("📺 𝐒𝐄𝐑𝐈𝐄𝐒", 'sinfo')
                 ]
             )       
     except KeyError:
         await save_group_settings(message.chat.id, 'auto_delete', True)
         btn.insert(0, 
             [
-                InlineKeyboardButton(f'ɪɴꜰᴏ', 'reqinfo'),
-                InlineKeyboardButton(f'ᴍᴏᴠɪᴇ', 'minfo'),
-                InlineKeyboardButton(f'ꜱᴇʀɪᴇꜱ', 'sinfo')
+                InlineKeyboardButton("ℹ️ 𝐈𝐍𝐅𝐎", 'reqinfo'),
+                InlineKeyboardButton("🎬 𝐌𝐎𝐕𝐈𝐄", 'minfo'),
+                InlineKeyboardButton("📺 𝐒𝐄𝐑𝐈𝐄𝐒", 'sinfo')
             ]
         )
 
     btn.insert(0, [
-        InlineKeyboardButton("! Sᴇɴᴅ Aʟʟ Tᴏ PM !", callback_data=f"send_fall#{pre}#{0}#{message.from_user.id}"),
+        InlineKeyboardButton("✨ 𝑺𝒆𝒏𝒅 𝑨𝒍𝒍 𝑻𝒐 𝑷𝑴 ✨", callback_data=f"send_fall#{pre}#{0}#{message.from_user.id}"),
     ])
 
     if offset != "":
@@ -1583,22 +1558,23 @@ async def auto_ffilter(client, msg, spoll=False):
         try:
             if settings['max_btn']:
                 btn.append(
-                    [InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key}_{offset}")]
+                    [InlineKeyboardButton("📑 𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"𝟏/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="➡️ 𝐍𝐄𝐗𝐓",callback_data=f"next_{req}_{key}_{offset}")]
                 )
             else:
                 btn.append(
-                    [InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/int(MAX_B_TN))}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key}_{offset}")]
+                    [InlineKeyboardButton("📑 𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"𝟏/{math.ceil(int(total_results)/int(MAX_B_TN))}",callback_data="pages"), InlineKeyboardButton(text="➡️ 𝐍𝐄𝐗𝐓",callback_data=f"next_{req}_{key}_{offset}")]
                 )
         except KeyError:
             await save_group_settings(message.chat.id, 'max_btn', True)
             btn.append(
-                [InlineKeyboardButton("𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"1/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="𝐍𝐄𝐗𝐓 ➪",callback_data=f"next_{req}_{key}_{offset}")]
+                [InlineKeyboardButton("📑 𝐏𝐀𝐆𝐄", callback_data="pages"), InlineKeyboardButton(text=f"𝟏/{math.ceil(int(total_results)/10)}",callback_data="pages"), InlineKeyboardButton(text="➡️ 𝐍𝐄𝐗𝐓",callback_data=f"next_{req}_{key}_{offset}")]
             )
     else:
         btn.append(
-            [InlineKeyboardButton(text="1/1",callback_data="pages")]
+            [InlineKeyboardButton(text="𝟏/𝟏",callback_data="pages")]
         )
-    cap = f"<b>Hᴇʏ {message.from_user.mention}, Hᴇʀᴇ ɪs Wʜᴀᴛ I Fᴏᴜɴᴅ Iɴ Mʏ Dᴀᴛᴀʙᴀsᴇ Fᴏʀ Yᴏᴜʀ Qᴜᴇʀʏ {search}.</b>"
+
+    cap = f"<b>✨ Hᴇʏ {message.from_user.mention}, Hᴇʀᴇ’ꜱ 𝖜𝖍𝖆𝖙 I Fᴏᴜɴᴅ 𝖋ᴏʀ ʏᴏᴜʀ 𝖖ᴜᴇʀʏ 『{search}』 ✨</b>"
     fuk = await message.reply_text(cap, reply_markup=InlineKeyboardMarkup(btn))
     try:
         if settings['auto_delete']:
@@ -1612,8 +1588,6 @@ async def auto_ffilter(client, msg, spoll=False):
             await msg.delete()
     if spoll:
         await msg.delete()
-
-
 
 async def advantage_spell_chok(client, message):
     mv_id = message.id

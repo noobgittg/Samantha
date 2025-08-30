@@ -1468,6 +1468,7 @@ async def auto_ffilter(client, msg, spoll=False):
     reqstr = await client.get_users(reqstr1)
     if not spoll:
         message = msg
+        msg = message
         settings = await get_settings(message.chat.id)
         if message.text.startswith("/"): return  # ignore commands
         if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
@@ -1603,12 +1604,12 @@ async def auto_ffilter(client, msg, spoll=False):
         if settings['auto_delete']:
             await asyncio.sleep(600)
             await fuk.delete()
-            await message.delete()
+            await msg.delete()
     except KeyError:
             await save_group_settings(message.chat.id, 'auto_delete', True)
             await asyncio.sleep(600)
             await fuk.delete()
-            await message.delete()
+            await msg.delete()
     if spoll:
         await msg.delete()
 

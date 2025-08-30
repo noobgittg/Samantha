@@ -39,7 +39,7 @@ SPELL_CHECK = {}
 
 @Client.on_message(filters.text & filters.incoming)
 async def give_filter(client, message):
-    await auto_filter(client, message)
+    await auto_ffilter(client, message)
 
 @Client.on_callback_query(filters.regex(r"^next"))
 async def next_page(bot, query):
@@ -1463,7 +1463,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
     await query.answer(MSG_ALRT)
 
 
-async def auto_filter(client, msg, spoll=False):
+async def auto_ffilter(client, msg, spoll=False):
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
     if not spoll:

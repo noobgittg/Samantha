@@ -1663,31 +1663,25 @@ async def advantage_spell_chok(client, message):
     except:
         pass
 
-
 async def advantage_spell(client, msg):
     mv_id = msg.id
     mv_rqst = msg.text
     reqstr1 = msg.from_user.id if msg.from_user else 0
     reqstr = await client.get_users(reqstr1)
 
-    # Pre-clean query
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
         "", msg.text, flags=re.IGNORECASE
     ).strip() + " movie"
 
-    # ⚡ Fast immediate response
     fast_msg = await msg.reply_text("🔍 Searching, please wait...")
 
     async def process():
         try:
-            movies = await get_poster(mv_rqst, bulk=True)
-        except Exception as e:
-            logger.exception(e)
+            movies = []  # No IMDb/get_poster, you can later hook your own list here
+        except Exception:
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
-            if NO_RESULTS_MSG:
-                await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
             k = await msg.reply_photo(
                 photo=SPELL_IMG,
                 caption=script.I_CUDNT.format(mv_rqst),
@@ -1701,8 +1695,6 @@ async def advantage_spell(client, msg):
         if not movies:
             reqst_gle = mv_rqst.replace(" ", "+")
             button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
-            if NO_RESULTS_MSG:
-                await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
             k = await msg.reply_photo(
                 photo=SPELL_IMG,
                 caption=script.I_CUDNT.format(mv_rqst),
@@ -1713,7 +1705,6 @@ async def advantage_spell(client, msg):
             await k.delete()
             return
 
-        # Build movielist
         movielist = [movie.get('title') for movie in movies]
         movielist += [f"{movie.get('title')} {movie.get('year')}" for movie in movies]
         SPELL_CHECK[mv_id] = movielist
@@ -1722,7 +1713,7 @@ async def advantage_spell(client, msg):
             [InlineKeyboardButton(text=movie_name.strip(), callback_data=f"spol#{reqstr1}#{k}")]
             for k, movie_name in enumerate(movielist)
         ]
-        btn.append([InlineKeyboardButton("❌ Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+        btn.append([InlineKeyboardButton("🚫 ᴄʟᴏsᴇ 🚫", callback_data=f'spol#{reqstr1}#close_spellcheck')])
 
         spell_check_del = await msg.reply_photo(
             photo=SPELL_IMG,
@@ -1732,7 +1723,6 @@ async def advantage_spell(client, msg):
 
         await fast_msg.delete()
 
-        # Auto-delete cleanup
         try:
             settings = await get_settings(msg.chat.id)
             if settings.get('auto_delete'):
@@ -1742,11 +1732,7 @@ async def advantage_spell(client, msg):
             grpid = await active_connection(str(msg.from_user.id))
             await save_group_settings(grpid, 'auto_delete', True)
 
-    # Run heavy work in background
     asyncio.create_task(process())
-
-
-
 
 async def manual_filters(client, message, text=False):
     settings = await get_settings(message.chat.id)

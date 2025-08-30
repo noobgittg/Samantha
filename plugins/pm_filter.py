@@ -1475,12 +1475,14 @@ async def auto_filter(client, msg, spoll=False):
         if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
             await message.delete()
             return
-        if len(message.text) < 50:
+        if len(message.text) < 30:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:
                 if settings["spell_check"]:
-                    return await advantage_spell_chok(client, msg)
+                    await advantage_spell_chok(client, msg)
+                    await advantage_spell(client, msg)
+                    return
                 else:
                     return
         else:
@@ -1661,6 +1663,90 @@ async def advantage_spell_chok(client, message):
         await message.delete()
     except:
         pass
+
+
+async def advantage_spell(client, msg):
+    mv_id = msg.id
+    mv_rqst = msg.text
+    reqstr1 = msg.from_user.id if msg.from_user else 0
+    reqstr = await client.get_users(reqstr1)
+
+    # Pre-clean query
+    query = re.sub(
+        r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
+        "", msg.text, flags=re.IGNORECASE
+    ).strip() + " movie"
+
+    # ⚡ Fast immediate response
+    fast_msg = await msg.reply_text("🔍 Searching, please wait...")
+
+    async def process():
+        try:
+            movies = await get_poster(mv_rqst, bulk=True)
+        except Exception as e:
+            logger.exception(e)
+            reqst_gle = mv_rqst.replace(" ", "+")
+            button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
+            if NO_RESULTS_MSG:
+                await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+            k = await msg.reply_photo(
+                photo=SPELL_IMG,
+                caption=script.I_CUDNT.format(mv_rqst),
+                reply_markup=InlineKeyboardMarkup(button)
+            )
+            await fast_msg.delete()
+            await asyncio.sleep(30)
+            await k.delete()
+            return
+
+        if not movies:
+            reqst_gle = mv_rqst.replace(" ", "+")
+            button = [[InlineKeyboardButton("Gᴏᴏɢʟᴇ", url=f"https://www.google.com/search?q={reqst_gle}")]]
+            if NO_RESULTS_MSG:
+                await client.send_message(chat_id=LOG_CHANNEL, text=(script.NORSLTS.format(reqstr.id, reqstr.mention, mv_rqst)))
+            k = await msg.reply_photo(
+                photo=SPELL_IMG,
+                caption=script.I_CUDNT.format(mv_rqst),
+                reply_markup=InlineKeyboardMarkup(button)
+            )
+            await fast_msg.delete()
+            await asyncio.sleep(30)
+            await k.delete()
+            return
+
+        # Build movielist
+        movielist = [movie.get('title') for movie in movies]
+        movielist += [f"{movie.get('title')} {movie.get('year')}" for movie in movies]
+        SPELL_CHECK[mv_id] = movielist
+
+        btn = [
+            [InlineKeyboardButton(text=movie_name.strip(), callback_data=f"spol#{reqstr1}#{k}")]
+            for k, movie_name in enumerate(movielist)
+        ]
+        btn.append([InlineKeyboardButton("❌ Close", callback_data=f'spol#{reqstr1}#close_spellcheck')])
+
+        spell_check_del = await msg.reply_photo(
+            photo=SPELL_IMG,
+            caption=script.CUDNT_FND.format(mv_rqst),
+            reply_markup=InlineKeyboardMarkup(btn)
+        )
+
+        await fast_msg.delete()
+
+        # Auto-delete cleanup
+        try:
+            settings = await get_settings(msg.chat.id)
+            if settings.get('auto_delete'):
+                await asyncio.sleep(600)
+                await spell_check_del.delete()
+        except KeyError:
+            grpid = await active_connection(str(msg.from_user.id))
+            await save_group_settings(grpid, 'auto_delete', True)
+
+    # Run heavy work in background
+    asyncio.create_task(process())
+
+
 
 
 async def manual_filters(client, message, text=False):

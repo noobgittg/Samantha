@@ -1,4 +1,4 @@
-pyrofork==2.3.43
+pyrofork==2.3.45
 psutil==5.9.4
 tgcrypto
 pymongo[srv]==3.12.3

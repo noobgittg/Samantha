@@ -60,7 +60,7 @@ class Bot(Client):
         free_dbSize = round(512 - ((stats['dataSize'] / (1024 * 1024)) +
                                    (stats['indexSize'] / (1024 * 1024))), 2)
 
-        if SECONDDB_URI and free_dbSize < 10:
+        if SECONDDB_URI and free_dbSize <= 200:
             tempDict["indexDB"] = SECONDDB_URI
             logging.info(f"🗄️ Primary DB low ({free_dbSize} MB) → Switching to Secondary DB.")
         elif not SECONDDB_URI:

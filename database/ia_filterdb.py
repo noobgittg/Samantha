@@ -66,12 +66,19 @@ async def choose_mediaDB():
         saveMedia = Media2
 
 async def save_file(media):
+    global saveMedia
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
+    DATABASES = [Media, Media2]
     try:
-        if await Media.count_documents({'file_id': file_id}, limit=1):
-            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} is already saved in primary DB !')
-            return False, 0
+        for db in DATABASES:
+            if await db.count_documents({'file_id': file_id}, limit=1):
+                logger.warning(
+                    "Duplicate detected: file=%s (id=%s) already exists in %s",
+                    file_name, file_id, db.__name__
+                )
+                return False, 0
+
         file = saveMedia(
             file_id=file_id,
             file_ref=file_ref,
@@ -81,23 +88,24 @@ async def save_file(media):
             mime_type=media.mime_type,
             caption=media.caption.html if media.caption else None,
         )
-    except ValidationError:
-        logger.exception('Error occurred while saving file in database')
+
+    except ValidationError as e:
+        logger.exception(
+            "Validation error while saving file: file=%s (id=%s), error=%s",
+            file_name, file_id, str(e)
+        )
         return False, 2
-    else:
-        try:
-            await file.commit()
-        except DuplicateKeyError:  
-            logger.warning(
-                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
-            )
 
-            return False, 0
-        else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
-            return True, 1
+    try:
+        await file.commit()
+        logger.info("File saved successfully: file=%s (id=%s)", file_name, file_id)
+        return True, 1
 
-
+    except DuplicateKeyError:
+        logger.warning(
+            "Duplicate key on commit: file=%s (id=%s)", file_name, file_id
+        )
+        return False, 0
 
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
     query = query.strip()

@@ -27,7 +27,7 @@ class Bot(Client):
             api_id=API_ID,
             api_hash=API_HASH,
             bot_token=BOT_TOKEN,
-            workers=200,
+            workers=1200,
             plugins={"root": "plugins"},
             sleep_threshold=20,
         )
@@ -38,10 +38,10 @@ class Bot(Client):
         async with aiohttp.ClientSession() as session:
             while True:
                 try:
-                    await session.get("https://adequate-quail-filterbotkn-818b00d4.koyeb.app/")
-                    logging.info("💚 Keep-alive ping successful.")
+                    await session.get("https://universal-ameline-filterbotkn-3c7487c4.koyeb.app/")
+                    logging.info("Working..!!")
                 except Exception as e:
-                    logging.error(f"⚠️ Keep-alive failed: {e}")
+                    logging.error(f"Error: {e}")
                 await asyncio.sleep(60)  # safer interval (instead of 4s)
 
     async def start(self):

@@ -1,99 +1,53 @@
-import re
-import logging
+import os
 from pyrogram import Client, filters
-from info import CHANNELS, DELETE_CHANNELS
-from database.ia_filterdb import Media, Media2, save_file
+from pyrogram.types import Message
+from info import CHANNELS, ADMINS
+from database.ia_filterdb import save_file
 
-logger = logging.getLogger(__name__)
-
-# Filters for media types
 media_filter = filters.document | filters.video | filters.audio
 
-# Databases list
-DBS = [Media, Media2]
-
-
-def extract_media(message):
-    """Extracts the media object (document/video/audio) from a Pyrogram message."""
-    for file_type in ("document", "video", "audio"):
-        media = getattr(message, file_type, None)
-        if media:
-            return file_type, media
-    return None, None
-
-
-async def delete_from_dbs(query: dict) -> bool:
-    """Delete a single record from any of the databases."""
-    for db in DBS:
-        result = await db.collection.delete_one(query)
-        if result.deleted_count > 0:
-            return True
-    return False
-
-
-async def delete_many_from_dbs(query: dict) -> bool:
-    """Delete multiple records from any of the databases."""
-    for db in DBS:
-        result = await db.collection.delete_many(query)
-        if result.deleted_count > 0:
-            return True
-    return False
-
+if isinstance(CHANNELS, (int, str)):
+    CHANNELS = [CHANNELS]
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
-async def save_media(bot: Client, message):
-    """Handles media messages in CHANNELS and saves them to the database."""
-    file_type, media = extract_media(message)
+async def save_media(bot: Client, message: Message):
+    media = None
+    file_type = None
+
+    for attr in ["document", "video", "audio"]:
+        media = getattr(message, attr, None)
+        if media:
+            file_type = attr
+            break
+
     if not media:
         return
 
-    file_data = {
-        "file_id": media.file_id,
-        "file_unique_id": media.file_unique_id,
-        "file_name": getattr(media, "file_name", None),
-        "file_size": getattr(media, "file_size", None),
-        "mime_type": getattr(media, "mime_type", None),
-        "file_type": file_type,
-        "caption": getattr(message, "caption", None),
-    }
+    media.file_type = file_type
+    media.caption = message.caption or ""
+    await save_file(media)
 
-    try:
-        await save_file(file_data)
-        logger.info(f"✅ Saved file: {file_data['file_name']} ({file_data['file_unique_id']})")
-    except Exception as e:
-        logger.error(f"❌ Error saving file: {e}")
+@Client.on_message(filters.command("channel") & filters.user(ADMINS))
+async def channel_info(bot: Client, message: Message):
+    text_lines = ['📑 Indexed channels/groups\n']
 
+    for channel_id in CHANNELS:
+        try:
+            chat = await bot.get_chat(channel_id)
+            name = f"@{chat.username}" if chat.username else (chat.title or chat.first_name)
+            text_lines.append(name)
+        except Exception as e:
+            text_lines.append(f"[Failed to fetch: {channel_id}]")  # Optional: Debug
+            continue
 
-@Client.on_message(filters.chat(DELETE_CHANNELS) & media_filter)
-async def delete_media(bot: Client, message):
-    """Handles media messages in DELETE_CHANNELS and deletes them from the database."""
-    file_type, media = extract_media(message)
-    if not media:
-        return
+    text_lines.append(f'\n\nTotal: {len(CHANNELS)}')
+    text = "\n".join(text_lines)
 
-    # Try deleting by file_unique_id first
-    if await delete_from_dbs({"file_unique_id": media.file_unique_id}):
-        logger.info("✅ File successfully deleted from database (by unique_id).")
-        return
-
-    # Normalize filename for fallback
-    file_name = str(getattr(media, "file_name", "") or "")
-    file_name_norm = re.sub(r"[_\-\.\+]", " ", file_name).strip()
-
-    query = {
-        "file_name": file_name_norm,
-        "file_size": getattr(media, "file_size", None),
-        "mime_type": getattr(media, "mime_type", None),
-    }
-
-    # Try deleting by normalized name
-    if await delete_many_from_dbs(query):
-        logger.info("✅ File successfully deleted from database (by normalized name).")
-        return
-
-    # Final fallback: exact filename
-    query["file_name"] = file_name
-    if await delete_many_from_dbs(query):
-        logger.info("✅ File successfully deleted from database (by exact name).")
+    if len(text) <= 4096:
+        await message.reply(text)
     else:
-        logger.warning("⚠️ File not found in database.")
+        filename = 'Indexed_Channels.txt'
+        with open(filename, 'w', encoding='utf-8') as f:
+            f.write(text)
+        await message.reply_document(filename)
+        os.remove(filename)

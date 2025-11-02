@@ -1,4 +1,5 @@
 import os
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from info import CHANNELS, ADMINS
@@ -6,48 +7,58 @@ from database.ia_filterdb import save_file
 
 media_filter = filters.document | filters.video | filters.audio
 
-if isinstance(CHANNELS, (int, str)):
-    CHANNELS = [CHANNELS]
 
 @Client.on_message(filters.chat(CHANNELS) & media_filter)
-async def save_media(bot: Client, message: Message):
-    media = None
-    file_type = None
-
-    for attr in ["document", "video", "audio"]:
-        media = getattr(message, attr, None)
-        if media:
-            file_type = attr
+async def media(bot, message):
+    for file_type in ("document", "video"):
+        media = getattr(message, file_type, None)
+        if media is not None:
             break
-
-    if not media:
+    else:
         return
 
     media.file_type = file_type
-    media.caption = message.caption or ""
+    media.caption = message.caption
     await save_file(media)
 
 @Client.on_message(filters.command("channel") & filters.user(ADMINS))
 async def channel_info(bot: Client, message: Message):
-    text_lines = ['📑 Indexed channels/groups\n']
+    try:
+        if isinstance(CHANNELS, (int, str)):
+            channels = [CHANNELS]
+        elif isinstance(CHANNELS, list):
+            channels = CHANNELS
+        else:
+            raise ValueError("Unexpected type for CHANNELS configuration.")
 
-    for channel_id in CHANNELS:
-        try:
-            chat = await bot.get_chat(channel_id)
-            name = f"@{chat.username}" if chat.username else (chat.title or chat.first_name)
-            text_lines.append(name)
-        except Exception as e:
-            text_lines.append(f"[Failed to fetch: {channel_id}]")  # Optional: Debug
-            continue
+        text = "📜 **Indexed Channels / Groups:**\n"
+        total = len(channels)
 
-    text_lines.append(f'\n\nTotal: {len(CHANNELS)}')
-    text = "\n".join(text_lines)
+        for channel in channels:
+            try:
+                chat = await bot.get_chat(channel)
+                if chat.username:
+                    text += f"\n✅ @{chat.username}"
+                else:
+                    name = chat.title or chat.first_name or "Unnamed"
+                    text += f"\n✅ {name}"
+            except Exception as e:
+                text += f"\n⚠️ Failed to fetch `{channel}` — ({e})"
 
-    if len(text) <= 4096:
-        await message.reply(text)
-    else:
-        filename = 'Indexed_Channels.txt'
-        with open(filename, 'w', encoding='utf-8') as f:
-            f.write(text)
-        await message.reply_document(filename)
-        os.remove(filename)
+        text += f"\n\n📊 **Total Indexed:** {total}"
+
+        if len(text) < 4096:
+            await message.reply_text(text)
+        else:
+            file_path = "Indexed_Channels.txt"
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(text)
+            await message.reply_document(file_path)
+            os.remove(file_path)
+
+        print("📦 Channel info command executed successfully.")
+
+    except Exception as e:
+        error_text = f"🚨 **Error fetching channel info:**\n`{e}`"
+        await message.reply_text(error_text)
+        print(error_text)

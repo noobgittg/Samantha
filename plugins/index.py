@@ -187,7 +187,7 @@ async def index_files_to_db(last_msg_id, chat, msg, bot):
                 media.file_type = message.media.value
                 media.caption = message.caption
 
-                success, status = await save_file(bot, media)
+                success, status = await save_file(media)
                 if success:
                     total_files += 1
                 elif status == 0:

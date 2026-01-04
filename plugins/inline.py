@@ -127,17 +127,9 @@ async def answer(bot, query):
 
 
 def get_reply_markup(query):
-    logger.info(f"🔘 Creating inline buttons for query: '{query}'")
     buttons = [
         [
-            InlineKeyboardButton('🔍 Search Again', switch_inline_query_current_chat=query),
-            InlineKeyboardButton('📋 Help', switch_inline_query_current_chat='help')
-        ],
-        [
-            InlineKeyboardButton('🛑 Cancel', switch_inline_query_current_chat=''),
-            InlineKeyboardButton('🔄 Restart', switch_inline_query_current_chat=query)
+            InlineKeyboardButton('Search again', switch_inline_query_current_chat=query)
         ]
-    ]
-    markup = InlineKeyboardMarkup(buttons)
-    logger.info("✅ Reply markup created with search, help, cancel, restart buttons")
-    return markup
+        ]
+    return InlineKeyboardMarkup(buttons)

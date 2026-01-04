@@ -22,14 +22,13 @@ BATCH_FILES = {}
 async def start(client, message):
     if message.chat.type in [enums.ChatType.GROUP, enums.ChatType.SUPERGROUP]:
         buttons = [[
-            InlineKeyboardButton("➕️ Aᴅᴅ Mᴇ Tᴏ Yᴏᴜʀ Cʜᴀᴛ ➕", url=f"http://t.me/{temp.U_NAME}?startgroup=true"),
-            ],[
-            InlineKeyboardButton("🔎 Sᴇᴀʀᴄʜ", switch_inline_query_current_chat=''), 
-            ],[
-            InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
-            InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
-            ],[
-            InlineKeyboardButton("𝗗𝗼𝗻𝗮𝘁𝗲 𝗧𝗼 𝗠𝗲 ❤️", callback_data="donate")
+        InlineKeyboardButton("✨ 𝗔𝗱𝗱 𝗠𝗲 𝗧𝗼 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽 ✨", url=f"https://t.me/{temp.U_NAME}?startgroup=true"),
+        ],[
+        InlineKeyboardButton("🔍 𝗦𝗲𝗮𝗿𝗰𝗵 𝗛𝗲𝗿𝗲", switch_inline_query_current_chat=''),
+        InlineKeyboardButton("📖 𝗛𝗲𝗹𝗽", callback_data="help"),
+        ],[
+        InlineKeyboardButton("🌟 𝗔𝗯𝗼𝘂𝘁 𝗠𝗲", callback_data="about"),
+        InlineKeyboardButton("❤️ 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 / 𝗗𝗼𝗻𝗮𝘁𝗲", callback_data="donate"),
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
@@ -48,14 +47,13 @@ async def start(client, message):
         await client.send_message(LOG_CHANNEL, script.LOG_TEXT_P.format(message.from_user.id, message.from_user.mention))
     if len(message.command) != 2:
         buttons = [[
-            InlineKeyboardButton("➕️ Aᴅᴅ Mᴇ Tᴏ Yᴏᴜʀ Cʜᴀᴛ ➕", url=f"http://t.me/{temp.U_NAME}?startgroup=true"),
-            ],[
-            InlineKeyboardButton("🔎 Sᴇᴀʀᴄʜ", switch_inline_query_current_chat=''), 
-            ],[
-            InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
-            InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
-            ],[
-            InlineKeyboardButton("𝗗𝗼𝗻𝗮𝘁𝗲 𝗧𝗼 𝗠𝗲 ❤️", callback_data="donate")
+        InlineKeyboardButton("✨ 𝗔𝗱𝗱 𝗠𝗲 𝗧𝗼 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽 ✨", url=f"https://t.me/{temp.U_NAME}?startgroup=true"),
+        ],[
+        InlineKeyboardButton("🔍 𝗦𝗲𝗮𝗿𝗰𝗵 𝗛𝗲𝗿𝗲", switch_inline_query_current_chat=''),
+        InlineKeyboardButton("📖 𝗛𝗲𝗹𝗽", callback_data="help"),
+        ],[
+        InlineKeyboardButton("🌟 𝗔𝗯𝗼𝘂𝘁 𝗠𝗲", callback_data="about"),
+        InlineKeyboardButton("❤️ 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 / 𝗗𝗼𝗻𝗮𝘁𝗲", callback_data="donate"),
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
@@ -98,14 +96,13 @@ async def start(client, message):
         return
     if len(message.command) == 2 and message.command[1] in ["subscribe", "error", "okay", "help"]:
         buttons = [[
-            InlineKeyboardButton("➕️ Aᴅᴅ Mᴇ Tᴏ Yᴏᴜʀ Cʜᴀᴛ ➕", url=f"http://t.me/{temp.U_NAME}?startgroup=true"),
-            ],[
-            InlineKeyboardButton("🔎 Sᴇᴀʀᴄʜ", switch_inline_query_current_chat=''), 
-            ],[
-            InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
-            InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
-            ],[
-            InlineKeyboardButton("𝗗𝗼𝗻𝗮𝘁𝗲 𝗧𝗼 𝗠𝗲 ❤️", callback_data="donate")
+        InlineKeyboardButton("✨ 𝗔𝗱𝗱 𝗠𝗲 𝗧𝗼 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽 ✨", url=f"https://t.me/{temp.U_NAME}?startgroup=true"),
+        ],[
+        InlineKeyboardButton("🔍 𝗦𝗲𝗮𝗿𝗰𝗵 𝗛𝗲𝗿𝗲", switch_inline_query_current_chat=''),
+        InlineKeyboardButton("📖 𝗛𝗲𝗹𝗽", callback_data="help"),
+        ],[
+        InlineKeyboardButton("🌟 𝗔𝗯𝗼𝘂𝘁 𝗠𝗲", callback_data="about"),
+        InlineKeyboardButton("❤️ 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 / 𝗗𝗼𝗻𝗮𝘁𝗲", callback_data="donate"),
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await message.reply_photo(
@@ -288,39 +285,6 @@ async def start(client, message):
     await k.edit("<b>Your File/Video is successfully deleted!!!</b>" ,reply_markup=InlineKeyboardMarkup(GET))
     return
    
-                    
-
-@Client.on_message(filters.command('channel') & filters.user(ADMINS))
-async def channel_info(bot, message):
-           
-    """Send basic information of channel"""
-    if isinstance(CHANNELS, (int, str)):
-        channels = [CHANNELS]
-    elif isinstance(CHANNELS, list):
-        channels = CHANNELS
-    else:
-        raise ValueError("Uɴᴇxᴘᴇᴄᴛᴇᴅ ᴛʏᴘᴇ ᴏғ CHANNELS")
-
-    text = '📑 **Iɴᴅᴇxᴇᴅ ᴄʜᴀɴɴᴇʟs/ɢʀᴏᴜᴘs**\n'
-    for channel in channels:
-        chat = await bot.get_chat(channel)
-        if chat.username:
-            text += '\n@' + chat.username
-        else:
-            text += '\n' + chat.title or chat.first_name
-
-    text += f'\n\n**Total:** {len(CHANNELS)}'
-
-    if len(text) < 4096:
-        await message.reply(text)
-    else:
-        file = 'Indexed channels.txt'
-        with open(file, 'w') as f:
-            f.write(text)
-        await message.reply_document(file)
-        os.remove(file)
-
-
 @Client.on_message(filters.command('logs') & filters.user(ADMINS))
 async def log_file(bot, message):
     """Send log file"""

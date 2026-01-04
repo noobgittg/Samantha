@@ -822,14 +822,13 @@ async def cb_handler(client: Client, query: CallbackQuery):
 
     elif query.data == "start":
         buttons = [[
-            InlineKeyboardButton("➕️ Aᴅᴅ Mᴇ Tᴏ Yᴏᴜʀ Cʜᴀᴛ ➕", url=f"http://t.me/{temp.U_NAME}?startgroup=true"),
-            ],[
-            InlineKeyboardButton("🔎 Sᴇᴀʀᴄʜ", switch_inline_query_current_chat=''), 
-            ],[
-            InlineKeyboardButton("Hᴇʟᴩ 🕸️", callback_data="help"),
-            InlineKeyboardButton("Aʙᴏᴜᴛ ✨", callback_data="about")
-            ],[
-            InlineKeyboardButton("𝗗𝗼𝗻𝗮𝘁𝗲 𝗧𝗼 𝗠𝗲 ❤️", callback_data="donate")
+        InlineKeyboardButton("✨ 𝗔𝗱𝗱 𝗠𝗲 𝗧𝗼 𝗬𝗼𝘂𝗿 𝗚𝗿𝗼𝘂𝗽 ✨", url=f"https://t.me/{temp.U_NAME}?startgroup=true"),
+        ],[
+        InlineKeyboardButton("🔍 𝗦𝗲𝗮𝗿𝗰𝗵 𝗛𝗲𝗿𝗲", switch_inline_query_current_chat=''),
+        InlineKeyboardButton("📖 𝗛𝗲𝗹𝗽", callback_data="help"),
+        ],[
+        InlineKeyboardButton("🌟 𝗔𝗯𝗼𝘂𝘁 𝗠𝗲", callback_data="about"),
+        InlineKeyboardButton("❤️ 𝗦𝘂𝗽𝗽𝗼𝗿𝘁 / 𝗗𝗼𝗻𝗮𝘁𝗲", callback_data="donate"),
         ]]
         reply_markup = InlineKeyboardMarkup(buttons)
         await query.message.edit_text(

@@ -207,3 +207,4 @@ async def index_files_to_db(last_msg_id, chat, msg, bot):
         except Exception as e:
             logger.exception(e)
             await msg.edit(f"⚠️ Error occurred: `{e}`")
+

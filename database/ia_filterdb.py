@@ -1,5 +1,5 @@
-import logging
 import asyncio
+import logging
 from struct import pack
 import re
 import base64
@@ -57,6 +57,7 @@ class Media2(Document):
         collection_name = COLLECTION_NAME
 
 async def choose_mediaDB():
+    """This Function chooses which database to use based on the value of indexDB key in the dict tempDict."""
     global saveMedia
     if tempDict['indexDB'] == DATABASE_URI:
         logger.info("Using first db (Media)")
@@ -66,19 +67,15 @@ async def choose_mediaDB():
         saveMedia = Media2
 
 async def save_file(media):
-    global saveMedia
+    """Save file in database"""
+
+    # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
-    DATABASES = [Media, Media2]
     try:
-        for db in DATABASES:
-            if await db.count_documents({'file_id': file_id}, limit=1):
-                logger.warning(
-                    "Duplicate detected: file=%s (id=%s) already exists in %s",
-                    file_name, file_id, db.__name__
-                )
-                return False, 0
-
+        if await Media.count_documents({'file_id': file_id}, limit=1):
+            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} is already saved in primary DB !')
+            return False, 0
         file = saveMedia(
             file_id=file_id,
             file_ref=file_ref,
@@ -88,24 +85,21 @@ async def save_file(media):
             mime_type=media.mime_type,
             caption=media.caption.html if media.caption else None,
         )
-
-    except ValidationError as e:
-        logger.exception(
-            "Validation error while saving file: file=%s (id=%s), error=%s",
-            file_name, file_id, str(e)
-        )
+    except ValidationError:
+        logger.exception('Error occurred while saving file in database')
         return False, 2
+    else:
+        try:
+            await file.commit()
+        except DuplicateKeyError:  
+            logger.warning(
+                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
+            )
 
-    try:
-        await file.commit()
-        logger.info("File saved successfully: file=%s (id=%s)", file_name, file_id)
-        return True, 1
-
-    except DuplicateKeyError:
-        logger.warning(
-            "Duplicate key on commit: file=%s (id=%s)", file_name, file_id
-        )
-        return False, 0
+            return False, 0
+        else:
+            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
+            return True, 1
 
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
     query = query.strip()
@@ -159,55 +153,51 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
     else:
         return files, '', total_results
 
-
 async def get_bad_files(query, file_type=None, filter=False):
-    """For given query return (results, next_offset)"""
     query = query.strip()
-    #if filter:
-        #better ?
-        #query = query.replace(' ', r'(\s|\.|\+|\-|_)')
-        #raw_pattern = r'(\s|_|\-|\.|\+)' + query + r'(\s|_|\-|\.|\+)'
     if not query:
-        raw_pattern = '.'
-    elif ' ' not in query:
-        raw_pattern = r'(\b|[\.\+\-_])' + query + r'(\b|[\.\+\-_])'
+        raw_pattern = "."
+    elif " " not in query:
+        raw_pattern = rf"(\b|[.\+\-_]){re.escape(query)}(\b|[.\+\-_])"
     else:
-        raw_pattern = query.replace(' ', r'.*[\s\.\+\-_()]')
-    
+        raw_pattern = re.escape(query).replace(r"\ ", r".*[\s.\+\-_()]")
+
     try:
         regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except:
-        return []
+    except re.error:
+        return [], 0
 
-    if USE_CAPTION_FILTER:
-        filter = {'$or': [{'file_name': regex}, {'caption': regex}]}
-    else:
-        filter = {'file_name': regex}
+    search_filter = (
+        {"$or": [{"file_name": regex}, {"caption": regex}]}
+        if USE_CAPTION_FILTER
+        else {"file_name": regex}
+    )
 
     if file_type:
-        filter['file_type'] = file_type
+        search_filter["file_type"] = file_type
 
-    cursor = Media.find(filter)
-    cursor2 = Media2.find(filter)
-    # Sort by recent
-    cursor.sort('$natural', -1)
-    cursor2.sort('$natural', -1)
-    # Get list of files
-    files = ((await cursor2.to_list(length=(await Media2.count_documents(filter))))+(await cursor.to_list(length=(await Media.count_documents(filter)))))
+    # Collections to search
+    collections = [Media, Media2]
+    files = []
 
-    #calculate total results
-    total_results = len(files)
+    for collection in collections:
+        cursor = collection.find(search_filter).sort("$natural", -1)
+        count = await collection.count_documents(search_filter)
+        if count > 0:
+            files.extend(await cursor.to_list(length=count))
 
-    return files, total_results
+    return files, len(files)
+
 
 async def get_file_details(query):
-    filter = {'file_id': query}
-    cursor = Media.find(filter)
-    filedetails = await cursor.to_list(length=1)
-    if not filedetails:
-        cursor2 = Media2.find(filter)
-        filedetails = await cursor2.to_list(length=1)
-    return filedetails
+    filter_query = {'file_id': query}
+    media_collections = [Media, Media2]
+
+    for collection in media_collections:
+        cursor = collection.find(filter_query)
+        filedetails = await cursor.to_list(length=1)
+        if filedetails:
+            return filedetails
 
 def encode_file_id(s: bytes) -> str:
     r = b""

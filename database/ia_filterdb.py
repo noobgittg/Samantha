@@ -17,6 +17,7 @@ logger.setLevel(logging.INFO)
 
 #some basic variables needed
 saveMedia = None
+LIMIT = 60
 
 #primary db
 client = AsyncIOMotorClient(DATABASE_URI)
@@ -66,27 +67,16 @@ async def choose_mediaDB():
         logger.info("Using second db (Media2)")
         saveMedia = Media2
 
-REMOVE_PATTERN = re.compile(
-    r"(\[MM\]|\@TvSeriesBay|\@Cinema\s?Company|\@Cinema_Company|\@CC|\@MM_New|\@MM_Linkz|"
-    r"\@MOVIEHUNT|\@CL|\@FBM|\@CKMSERIES|www_DVDWap_Com_|MLM|\@WMR|\[CF\]|\@IndianMoviez|"
-    r"\@tamil_mm|\@Rarefilms|\@Mallu_Movies|\@YTSLT|\@DailyMovieZhunt|\@I_M_D_B|\@PM_Old|"
-    r"Dvdworld|\[KMH\]|\@Film_Kottaka|\@CelluloidCineClub|\@cinemaheist|\@telugu_moviez|"
-    r"\@CR_Rockers|\@CCineClub|\[KC\]|KC_)",
-    re.IGNORECASE
-)
-
-
 async def save_file(media):
-    global saveMedia
+    """Save file in database"""
+
+    # TODO: Find better way to get same file_id for same media to avoid duplicates
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
-    file_name = REMOVE_PATTERN.sub(" ", file_name)
-    DATABASES = [Media, Media2]
     try:
-        for db in DATABASES:
-            if await db.count_documents({'file_id': file_id}, limit=80):
-                logger.warning(f'{getattr(media, "file_name", "NO_FILE")} is already saved in a database!')
-                return False, 0
+        if await Media.count_documents({'file_id': file_id}, limit=1):
+            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} is already saved in primary DB !')
+            return False, 0
         file = saveMedia(
             file_id=file_id,
             file_ref=file_ref,
@@ -102,11 +92,14 @@ async def save_file(media):
     else:
         try:
             await file.commit()
-        except DuplicateKeyError:
-            logger.warning(f'{getattr(media, "file_name", "NO_FILE")} is already saved in the database')
+        except DuplicateKeyError:  
+            logger.warning(
+                f'{getattr(media, "file_name", "NO_FILE")} is already saved in database'
+            )
+
             return False, 0
         else:
-            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to the database')
+            logger.info(f'{getattr(media, "file_name", "NO_FILE")} is saved to database')
             return True, 1
 
 async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):

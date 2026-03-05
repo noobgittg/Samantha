@@ -11,7 +11,8 @@ logging.getLogger("imdbpy").setLevel(logging.ERROR)
 
 from pyrogram import Client, __version__
 from pyrogram.raw.all import layer
-from database.ia_filterdb import Media, Media2, choose_mediaDB, db as clientDB
+from database.ia_filterdb import choose_mediaDB, db2 as clientDB
+from database.ia_filterdb import *
 from database.users_chats_db import db
 from info import *
 from utils import temp
@@ -68,6 +69,7 @@ class Bot(Client):
             exit()
         else:
             logging.info(f"Since primary DB have enough space ({free_dbSize}MB) left, It will be used for storing datas.")
+        tempDict["indexDB"] = SECONDDB_URI
         await choose_mediaDB()
         me = await self.get_me()
         temp.ME = me.id

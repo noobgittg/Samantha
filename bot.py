@@ -30,11 +30,11 @@ async def keep_alive():
     async with aiohttp.ClientSession() as session:
         while True:
             try:
-                await session.get("https://universal-ameline-filterbotkn-3c7487c4.koyeb.app/")  # Uses the imported URL from info.py
+                await session.get("https://handicapped-audra-filterbotkn-27aa5fb6.koyeb.app/")  # Uses the imported URL from info.py
                 logging.info("Working..!!")
             except Exception as e:
                 logging.error(f"Error Occurred : {e}")
-            await asyncio.sleep(60)
+            await asyncio.sleep(3)
 
 class Bot(Client):
 

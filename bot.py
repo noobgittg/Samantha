@@ -54,7 +54,7 @@ class Bot(Client):
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
         await super().start()
-        await Media.ensure_indexes()
+        #await Media.ensure_indexes()
         await Media2.ensure_indexes()
         #choose the right db by checking the free space
         stats = await clientDB.command('dbStats')

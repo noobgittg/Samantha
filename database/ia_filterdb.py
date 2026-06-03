@@ -1,73 +1,24 @@
-import asyncio
 import logging
 from struct import pack
 import re
 import base64
-from typing import List, Tuple, Optional, Dict, Any, Set
-from functools import lru_cache
-from hashlib import md5
 from pyrogram.file_id import FileId
 from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
-from info import *
+from info import DATABASE_URI, DATABASE_NAME, COLLECTION_NAME, USE_CAPTION_FILTER, MAX_B_TN, SECONDDB_URI
 from utils import get_settings, save_group_settings
-from sample_info import tempDict
+from sample_info import tempDict 
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# ── ⚡ CONFIG ──────────────────────────────────────────────────
+# 🗄️ Basic Variables
 saveMedia = None
-LIMIT = 60
-CACHE_TTL = 300  # 5 minutes cache
-CACHE_MAXSIZE = 1000
+_cache = {}  # 🚀 In-memory cache for speed
 
-# ── 🔥 IN‑MEMORY CACHE (no redis) ────────────────────────────
-class AsyncTTLCache:
-    """Simple async TTL cache with LRU eviction"""
-    def __init__(self, maxsize: int = 1000, ttl: int = 300):
-        self.maxsize = maxsize
-        self.ttl = ttl
-        self._cache: Dict[str, tuple] = {}  # key -> (value, expiry)
-        self._access_order: List[str] = []
-    
-    async def get(self, key: str) -> Optional[Any]:
-        if key in self._cache:
-            value, expiry = self._cache[key]
-            if expiry > asyncio.get_event_loop().time():
-                # update access order (LRU)
-                if key in self._access_order:
-                    self._access_order.remove(key)
-                self._access_order.append(key)
-                return value
-            else:
-                await self.delete(key)
-        return None
-    
-    async def set(self, key: str, value: Any):
-        if len(self._cache) >= self.maxsize:
-            # evict least recently used
-            lru_key = self._access_order.pop(0)
-            await self.delete(lru_key)
-        
-        self._cache[key] = (value, asyncio.get_event_loop().time() + self.ttl)
-        self._access_order.append(key)
-    
-    async def delete(self, key: str):
-        self._cache.pop(key, None)
-        if key in self._access_order:
-            self._access_order.remove(key)
-    
-    async def clear(self):
-        self._cache.clear()
-        self._access_order.clear()
-
-# global cache instance
-search_cache = AsyncTTLCache(maxsize=CACHE_MAXSIZE, ttl=CACHE_TTL)
-
-# ── 🗄️ PRIMARY DATABASE ───────────────────────────────────────
+# 📦 Primary Database
 client = AsyncIOMotorClient(DATABASE_URI)
 db = client[DATABASE_NAME]
 instance = Instance.from_db(db)
@@ -81,12 +32,12 @@ class Media(Document):
     file_type = fields.StrField(allow_none=True)
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
-    
+
     class Meta:
         indexes = ('$file_name',)
         collection_name = COLLECTION_NAME
 
-# ── 🗄️ SECONDARY DATABASE ─────────────────────────────────────
+# 📦 Secondary Database  
 client2 = AsyncIOMotorClient(SECONDDB_URI)
 db2 = client2[DATABASE_NAME]
 instance2 = Instance.from_db(db2)
@@ -100,44 +51,31 @@ class Media2(Document):
     file_type = fields.StrField(allow_none=True)
     mime_type = fields.StrField(allow_none=True)
     caption = fields.StrField(allow_none=True)
-    
+
     class Meta:
         indexes = ('$file_name',)
         collection_name = COLLECTION_NAME
 
-# ── 🔄 SMART DB SWITCH LOGIC ──────────────────────────────────
 async def choose_mediaDB():
-    """⚡ Dynamically selects database based on indexDB value"""
+    """⚡ Smart Dual-DB Load Balancer"""
     global saveMedia
     if tempDict.get('indexDB') == DATABASE_URI:
-        logger.info("🎯 ᴜꜱɪɴɢ ᴘʀɪᴍᴀʀʏ ᴅᴀᴛᴀʙᴀꜱᴇ (ᴍᴇᴅɪᴀ)")
+        logger.info("🎯 ᴀᴄᴛɪᴠᴇ ᴅᴀᴛᴀʙᴀꜱᴇ: ᴘʀɪᴍᴀʀʏ ᴅʙ (ᴍᴇᴅɪᴀ)")
         saveMedia = Media
-    elif tempDict.get('indexDB') == SECONDDB_URI:
-        logger.info("🎯 ᴜꜱɪɴɢ ꜱᴇᴄᴏɴᴅᴀʀʏ ᴅᴀᴛᴀʙᴀꜱᴇ (ᴍᴇᴅɪᴀ2)")
-        saveMedia = Media2
     else:
-        logger.warning("⚠️ ɪɴᴠᴀʟɪᴅ ᴅʙ ꜱᴇʟᴇᴄᴛɪᴏɴ, ꜰᴀʟʟʙᴀᴄᴋ ᴛᴏ ᴘʀɪᴍᴀʀʏ")
-        saveMedia = Media
+        logger.info("🎯 ᴀᴄᴛɪᴠᴇ ᴅᴀᴛᴀʙᴀꜱᴇ: ꜱᴇᴄᴏɴᴅᴀʀʏ ᴅʙ (ᴍᴇᴅɪᴀ2)")
+        saveMedia = Media2
 
-# ── 💾 OPTIMIZED FILE SAVER ───────────────────────────────────
 async def save_file(media):
-    """💾 Saves file with duplicate detection & smart error handling"""
+    """💾 ꜱᴀᴠᴇ ꜰɪʟᴇ ᴛᴏ ᴅᴀᴛᴀʙᴀꜱᴇ"""
     file_id, file_ref = unpack_new_file_id(media.file_id)
-    file_name = re.sub(r"[_\-\.\+]", " ", str(media.file_name))
-    
-    # quick duplicate check using cache
-    cache_key = f"exists:{file_id}"
-    if await search_cache.get(cache_key):
-        logger.warning(f"⚠️ {file_name[:30]}... ᴀʟʀᴇᴀᴅʏ ᴇxɪꜱᴛꜱ (ᴄᴀᴄʜᴇᴅ)")
-        return False, 0
+    file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
     
     try:
-        # Check primary DB first
         if await Media.count_documents({'file_id': file_id}, limit=1):
-            logger.warning(f"⚠️ {file_name[:30]}... ᴀʟʀᴇᴀᴅʏ ɪɴ ᴘʀɪᴍᴀʀʏ ᴅʙ")
-            await search_cache.set(cache_key, True)
+            logger.warning(f"⚠️ {getattr(media, 'file_name', 'ɴᴏ_ꜰɪʟᴇ')} ᴀʟʀᴇᴀᴅʏ ᴇxɪꜱᴛꜱ ɪɴ ᴘʀɪᴍᴀʀʏ ᴅʙ!")
             return False, 0
-        
+            
         file = saveMedia(
             file_id=file_id,
             file_ref=file_ref,
@@ -147,167 +85,172 @@ async def save_file(media):
             mime_type=media.mime_type,
             caption=media.caption.html if media.caption else None,
         )
-    except ValidationError as e:
-        logger.exception(f"❌ ᴠᴀʟɪᴅᴀᴛɪᴏɴ ᴇʀʀᴏʀ: {e}")
+    except ValidationError:
+        logger.exception('❌ ᴇʀʀᴏʀ ꜱᴀᴠɪɴɢ ꜰɪʟᴇ ᴛᴏ ᴅᴀᴛᴀʙᴀꜱᴇ')
         return False, 2
     else:
         try:
             await file.commit()
-            await search_cache.set(cache_key, True)
-            logger.info(f"✅ {file_name[:30]}... ꜱᴀᴠᴇᴅ ᴛᴏ ᴅᴀᴛᴀʙᴀꜱᴇ")
+            # 🚀 Clear cache for this query pattern
+            _cache.clear()
+            logger.info(f"✅ {getattr(media, 'file_name', 'ɴᴏ_ꜰɪʟᴇ')} ꜱᴀᴠᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ")
             return True, 1
-        except DuplicateKeyError:
-            logger.warning(f"⚠️ {file_name[:30]}... ᴅᴜᴘʟɪᴄᴀᴛᴇ ᴋᴇʏ")
-            await search_cache.set(cache_key, True)
+        except DuplicateKeyError:  
+            logger.warning(f"⚠️ {getattr(media, 'file_name', 'ɴᴏ_ꜰɪʟᴇ')} ᴀʟʀᴇᴀᴅʏ ᴇxɪꜱᴛꜱ")
             return False, 0
 
-# ── 🔍 10x FASTER SEARCH WITH CURSOR PAGINATION ───────────────
-async def get_search_results(
-    query: str, 
-    file_type: Optional[str] = None, 
-    max_results: int = 10, 
-    offset: int = 0, 
-    filter: bool = False,
-    use_cache: bool = True
-) -> Tuple[List[Dict], Any, int]:
-    """🔍 Ultra-fast dual-db search with cursor-based pagination"""
+async def get_search_results(chat_id, query, file_type=None, max_results=10, offset=0, filter=False):
+    """🔍 ꜰᴀꜱᴛ ꜱᴇᴀʀᴄʜ ᴡɪᴛʜ ᴄᴀᴄʜᴇ ꜱᴜᴘᴘᴏʀᴛ"""
+    
+    # 📊 ɢᴇᴛ ꜱᴇᴛᴛɪɴɢꜱ
+    if chat_id is not None:
+        settings = await get_settings(int(chat_id))
+        try:
+            if settings['max_btn']:
+                max_results = 10
+            else:
+                max_results = int(MAX_B_TN)
+        except KeyError:
+            await save_group_settings(int(chat_id), 'max_btn', False)
+            settings = await get_settings(int(chat_id))
+            if settings['max_btn']:
+                max_results = 10
+            else:
+                max_results = int(MAX_B_TN)
+    
+    # 🔍 ᴄᴀᴄʜᴇ ᴋᴇʏ ɢᴇɴᴇʀᴀᴛɪᴏɴ
+    cache_key = f"{query}:{file_type}:{max_results}:{offset}"
+    if cache_key in _cache:
+        logger.info(f"⚡ ᴄᴀᴄʜᴇ ʜɪᴛ ꜰᴏʀ: {query}")
+        return _cache[cache_key]
+    
     query = query.strip()
     
-    # generate cache key
-    cache_key = md5(f"{query}:{file_type}:{offset}:{max_results}".encode()).hexdigest()
-    
-    if use_cache:
-        cached = await search_cache.get(cache_key)
-        if cached:
-            logger.info(f"⚡ ᴄᴀᴄʜᴇ ʜɪᴛ ꜰᴏʀ: '{query[:20]}...'")
-            return cached
-    
-    # build regex pattern
+    # 📝 ʀᴇɢᴇx ᴘᴀᴛᴛᴇʀɴ
     if not query:
         raw_pattern = '.'
     elif ' ' not in query:
-        raw_pattern = rf'(\b|[\.\+\-_:]|\s|&){re.escape(query)}(\b|[\.\+\-_:]|\s|&)'
+        raw_pattern = r'(\b|[\.\+\-_])' + re.escape(query) + r'(\b|[\.\+\-_])'
     else:
-        raw_pattern = query.replace(' ', r'.*[&\s\.\+\-_()\[\]]')
+        raw_pattern = re.escape(query).replace(r'\ ', r'.*[\s\.\+\-_()]')
     
     try:
         regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except re.error:
-        return [], '', 0
-    
-    # build filter query
+    except:
+        return []
+
+    # 🎯 ꜰɪʟᴛᴇʀ ᴄᴏɴꜱᴛʀᴜᴄᴛɪᴏɴ
     if USE_CAPTION_FILTER:
         filter_query = {'$or': [{'file_name': regex}, {'caption': regex}]}
     else:
         filter_query = {'file_name': regex}
-    
+
     if file_type:
         filter_query['file_type'] = file_type
+
+    # 📊 ᴄᴏᴜɴᴛ ᴛᴏᴛᴀʟ ʀᴇꜱᴜʟᴛꜱ (ᴘᴀʀᴀʟʟᴇʟ)
+    count1 = Media.count_documents(filter_query)
+    count2 = Media2.count_documents(filter_query)
+    total_results = (await count1) + (await count2)
+
+    # 🔧 ᴇɴꜱᴜʀᴇ ᴇᴠᴇɴ ᴍᴀx_ʀᴇꜱᴜʟᴛꜱ
+    if max_results % 2 != 0:
+        logger.info(f"📊 ᴀᴅᴊᴜꜱᴛɪɴɢ ᴍᴀx_ʀᴇꜱᴜʟᴛꜱ ꜰʀᴏᴍ {max_results} ᴛᴏ {max_results+1}")
+        max_results += 1
+
+    # 🚀 ᴘᴀʀᴀʟʟᴇʟ ᴅᴀᴛᴀʙᴀꜱᴇ Qᴜᴇʀɪᴇꜱ
+    cursor = Media.find(filter_query).sort('$natural', -1)
+    cursor2 = Media2.find(filter_query).sort('$natural', -1)
     
-    # parallel queries with projection (fetch only needed fields)
-    projection = {'_id': 0, 'file_id': 1, 'file_name': 1, 'file_size': 1, 
-                  'file_type': 1, 'caption': 1, 'mime_type': 1}
+    cursor2.skip(offset).limit(max_results)
+    fileList2 = await cursor2.to_list(length=max_results)
     
-    tasks = [
-        Media.find(filter_query, projection=projection).sort('$natural', -1).to_list(length=LIMIT),
-        Media2.find(filter_query, projection=projection).sort('$natural', -1).to_list(length=LIMIT),
-    ]
+    # 📦 ᴍᴇʀɢᴇ ʀᴇꜱᴜʟᴛꜱ
+    if len(fileList2) < max_results:
+        next_offset = offset + len(fileList2)
+        remaining = max_results - len(fileList2)
+        cursorSkipper = max(0, next_offset - (await count2))
+        cursor.skip(cursorSkipper).limit(remaining)
+        fileList1 = await cursor.to_list(length=remaining)
+        files = fileList2 + fileList1
+        next_offset = next_offset + len(fileList1)
+    else:
+        files = fileList2
+        next_offset = offset + max_results
     
-    files_media, files_media2 = await asyncio.gather(*tasks)
+    if next_offset >= total_results:
+        next_offset = ''
     
-    # smart interleaving with duplicate removal
-    if offset < 0:
-        offset = 0
+    result = (files, next_offset, total_results)
     
-    interleaved_files = []
-    seen_file_ids: Set[str] = set()
+    # 💾 ᴄᴀᴄʜᴇ ᴛʜᴇ ʀᴇꜱᴜʟᴛ
+    _cache[cache_key] = result
+    logger.info(f"✅ ꜰᴏᴜɴᴅ {len(files)} ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ: {query}")
     
-    # interleave for better load balancing
-    max_len = max(len(files_media), len(files_media2))
-    for i in range(max_len):
-        if i < len(files_media) and files_media[i]['file_id'] not in seen_file_ids:
-            interleaved_files.append(files_media[i])
-            seen_file_ids.add(files_media[i]['file_id'])
-        if i < len(files_media2) and files_media2[i]['file_id'] not in seen_file_ids:
-            interleaved_files.append(files_media2[i])
-            seen_file_ids.add(files_media2[i]['file_id'])
-    
-    total_results = len(interleaved_files)
-    files = interleaved_files[offset:offset + max_results]
-    next_offset = offset + len(files)
-    
-    result = (files, next_offset if next_offset < total_results else '', total_results)
-    
-    # cache results
-    if use_cache:
-        await search_cache.set(cache_key, result)
-    
-    logger.info(f"📊 ꜱᴇᴀʀᴄʜ: '{query[:20]}...' → {len(files)}/{total_results} ʀᴇꜱᴜʟᴛꜱ")
     return result
 
-# ── 🗑️ BAD FILES RETRIEVAL (OPTIMIZED) ────────────────────────
-async def get_bad_files(query: str, file_type: Optional[str] = None, filter: bool = False) -> Tuple[List[Dict], int]:
-    """⚠️ Fetches bad/matching files efficiently"""
+async def get_bad_files(query, file_type=None, filter=False):
+    """⚠️ ɢᴇᴛ ᴀʟʟ ᴍᴀᴛᴄʜɪɴɢ ꜰɪʟᴇꜱ"""
     query = query.strip()
     
     if not query:
-        raw_pattern = "."
-    elif " " not in query:
-        raw_pattern = rf"(\b|[.+\-]){re.escape(query)}(\b|[.+\-])"
+        raw_pattern = '.'
+    elif ' ' not in query:
+        raw_pattern = r'(\b|[\.\+\-_])' + re.escape(query) + r'(\b|[\.\+\-_])'
     else:
-        raw_pattern = re.escape(query).replace(r"\ ", r".*[\s.+\-_()]")
+        raw_pattern = re.escape(query).replace(r'\ ', r'.*[\s\.\+\-_()]')
     
     try:
         regex = re.compile(raw_pattern, flags=re.IGNORECASE)
-    except re.error:
+    except:
         return [], 0
-    
-    search_filter = (
-        {"$or": [{"file_name": regex}, {"caption": regex}]}
-        if USE_CAPTION_FILTER else {"file_name": regex}
-    )
-    
+
+    if USE_CAPTION_FILTER:
+        filter_query = {'$or': [{'file_name': regex}, {'caption': regex}]}
+    else:
+        filter_query = {'file_name': regex}
+
     if file_type:
-        search_filter["file_type"] = file_type
-    
-    # parallel count + fetch
-    collections = [Media, Media2]
-    tasks = []
-    for collection in collections:
-        tasks.append(collection.count_documents(search_filter))
-        tasks.append(collection.find(search_filter).sort("$natural", -1).to_list(length=None))
-    
-    results = await asyncio.gather(*tasks)
-    
-    all_files = []
-    total_count = 0
-    
-    for i in range(0, len(results), 2):
-        count = results[i]
-        files = results[i+1]
-        total_count += count
-        all_files.extend(files)
-    
-    return all_files, total_count
+        filter_query['file_type'] = file_type
 
-# ── 📄 FILE DETAILS FETCHER ───────────────────────────────────
-async def get_file_details(query: str) -> Optional[Dict]:
-    """📄 Returns file details from first DB that has it"""
+    # 🚀 ᴘᴀʀᴀʟʟᴇʟ Qᴜᴇʀɪᴇꜱ
+    count1 = Media.count_documents(filter_query)
+    count2 = Media2.count_documents(filter_query)
+    cursor = Media.find(filter_query).sort('$natural', -1)
+    cursor2 = Media2.find(filter_query).sort('$natural', -1)
+    
+    files2 = await cursor2.to_list(length=await count2)
+    files1 = await cursor.to_list(length=await count1)
+    files = files2 + files1
+    
+    logger.info(f"📊 ᴛᴏᴛᴀʟ ʙᴀᴅ ꜰɪʟᴇꜱ ꜰᴏᴜɴᴅ: {len(files)}")
+    return files, len(files)
+
+async def get_file_details(query):
+    """📄 ɢᴇᴛ ꜰɪʟᴇ ᴅᴇᴛᴀɪʟꜱ ʙʏ ɪᴅ"""
     filter_query = {'file_id': query}
-    media_collections = [Media, Media2]
     
-    for collection in media_collections:
-        filedetails = await collection.find_one(filter_query)
-        if filedetails:
-            return filedetails
-    return None
+    # 🔍 ꜰɪʀꜱᴛ ᴄʜᴇᴄᴋ ᴄᴀᴄʜᴇ
+    if query in _cache:
+        return _cache[query]
+    
+    cursor = Media.find(filter_query)
+    filedetails = await cursor.to_list(length=1)
+    
+    if not filedetails:
+        cursor2 = Media2.find(filter_query)
+        filedetails = await cursor2.to_list(length=1)
+    
+    # 💾 ᴄᴀᴄʜᴇ ʀᴇꜱᴜʟᴛ
+    if filedetails:
+        _cache[query] = filedetails
+    
+    return filedetails
 
-# ── 🔧 ENCODING UTILITIES ─────────────────────────────────────
 def encode_file_id(s: bytes) -> str:
-    """🔐 Encodes file ID with proper padding"""
     r = b""
     n = 0
-    
+
     for i in s + bytes([22]) + bytes([4]):
         if i == 0:
             n += 1
@@ -316,14 +259,14 @@ def encode_file_id(s: bytes) -> str:
                 r += b"\x00" + bytes([n])
                 n = 0
             r += bytes([i])
+
     return base64.urlsafe_b64encode(r).decode().rstrip("=")
 
 def encode_file_ref(file_ref: bytes) -> str:
-    """🔐 Encodes file reference"""
     return base64.urlsafe_b64encode(file_ref).decode().rstrip("=")
 
-def unpack_new_file_id(new_file_id: str) -> Tuple[str, str]:
-    """📦 Unpacks Telegram file_id to custom format"""
+def unpack_new_file_id(new_file_id):
+    """📦 ᴜɴᴘᴀᴄᴋ ꜰɪʟᴇ ɪᴅ"""
     decoded = FileId.decode(new_file_id)
     file_id = encode_file_id(
         pack(
@@ -337,45 +280,8 @@ def unpack_new_file_id(new_file_id: str) -> Tuple[str, str]:
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
 
-# ── 🧹 CACHE MANAGEMENT ───────────────────────────────────────
-async def clear_search_cache():
-    """🧹 Clears entire search cache"""
-    await search_cache.clear()
-    logger.info("🗑️ ꜱᴇᴀʀᴄʜ ᴄᴀᴄʜᴇ ᴄʟᴇᴀʀᴇᴅ")
-
-async def invalidate_file_cache(file_id: str):
-    """🗑️ Invalidates specific file from cache"""
-    await search_cache.delete(f"exists:{file_id}")
-    logger.debug(f"🗑️ ᴄᴀᴄʜᴇ ɪɴᴠᴀʟɪᴅᴀᴛᴇᴅ ꜰᴏʀ: {file_id}")
-
-# ── 📊 HEALTH CHECK MONITORING ─────────────────────────────────
-async def health_check() -> Dict[str, Any]:
-    """🏥 Returns database health status"""
-    status = {
-        'primary_db': {'status': 'unknown', 'latency_ms': 0},
-        'secondary_db': {'status': 'unknown', 'latency_ms': 0},
-        'cache_hits': 0,
-        'cache_size': len(search_cache._cache)
-    }
-    
-    # check primary DB
-    try:
-        start = asyncio.get_event_loop().time()
-        await client.admin.command('ping')
-        status['primary_db']['latency_ms'] = round((asyncio.get_event_loop().time() - start) * 1000, 2)
-        status['primary_db']['status'] = 'healthy'
-    except Exception as e:
-        status['primary_db']['status'] = f'unhealthy: {str(e)[:50]}'
-        logger.error(f"🏥 ᴘʀɪᴍᴀʀʏ ᴅʙ ʜᴇᴀʟᴛʜ ᴄʜᴇᴄᴋ ꜰᴀɪʟᴇᴅ: {e}")
-    
-    # check secondary DB
-    try:
-        start = asyncio.get_event_loop().time()
-        await client2.admin.command('ping')
-        status['secondary_db']['latency_ms'] = round((asyncio.get_event_loop().time() - start) * 1000, 2)
-        status['secondary_db']['status'] = 'healthy'
-    except Exception as e:
-        status['secondary_db']['status'] = f'unhealthy: {str(e)[:50]}'
-        logger.error(f"🏥 ꜱᴇᴄᴏɴᴅᴀʀʏ ᴅʙ ʜᴇᴀʟᴛʜ ᴄʜᴇᴄᴋ ꜰᴀɪʟᴇᴅ: {e}")
-    
-    return status
+# 🧹 ᴄᴀᴄʜᴇ ᴄʟᴇᴀɴᴇʀ ᴜᴛɪʟɪᴛʏ now use less
+async def clear_cache():
+    """🗑️ ᴄʟᴇᴀʀ ᴄᴀᴄʜᴇ"""
+    _cache.clear()
+    logger.info("🧹 ᴄᴀᴄʜᴇ ᴄʟᴇᴀʀᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ")

@@ -197,7 +197,7 @@ async def send_for_index(bot, message):
                 f"📂 ɪɴᴅᴇx ᴛʜɪꜱ ᴄʜᴀɴɴᴇʟ/ɢʀᴏᴜᴘ?\n\n"
                 f"🔹 ᴄʜᴀᴛ ɪᴅ / ᴜꜱᴇʀɴᴀᴍᴇ: `{chat_id}`\n"
                 f"🔹 ʟᴀꜱᴛ ᴍᴇꜱꜱᴀɢᴇ ɪᴅ: `{last_msg_id}`\n\n"
-                f"ᴜꜱᴇ /setꜱᴋɪᴘ ᴛᴏ ꜱᴇᴛ ꜱᴋɪᴘ ᴠᴀʟᴜᴇ.",
+                f"ᴜꜱᴇ /setskip ᴛᴏ ꜱᴇᴛ ꜱᴋɪᴘ ᴠᴀʟᴜᴇ.",
                 reply_markup=InlineKeyboardMarkup(buttons)
             )
 
@@ -227,7 +227,7 @@ async def send_for_index(bot, message):
 @Client.on_message(filters.command("setskip") & filters.user(ADMINS))
 async def set_skip_number(_, message):
     if len(message.command) < 2:
-        return await message.reply("⚙️ ᴜꜱᴀɢᴇ: /setꜱᴋɪᴘ <ɴᴜᴍʙᴇʀ>")
+        return await message.reply("⚙️ ᴜꜱᴀɢᴇ: /setskip <ɴᴜᴍʙᴇʀ>")
 
     try:
         temp.CURRENT = int(message.command[1])

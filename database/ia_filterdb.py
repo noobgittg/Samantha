@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from umongo import Instance, Document, fields
 from motor.motor_asyncio import AsyncIOMotorClient
 from marshmallow.exceptions import ValidationError
-from info import DATABASE_URI, DATABASE_NAME, COLLECTION_NAME, USE_CAPTION_FILTER, MAX_B_TN, SECONDDB_URI
+from info import *
 from utils import get_settings, save_group_settings
 from sample_info import tempDict 
 
@@ -131,10 +131,10 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
         filter_query['file_type'] = file_type
 
     # 📊 ᴄᴏᴜɴᴛ ᴛᴏᴛᴀʟ ʀᴇꜱᴜʟᴛꜱ (ᴘᴀʀᴀʟʟᴇʟ)
-    count1 = Media.count_documents(filter_query)
-    count2 = Media2.count_documents(filter_query)
-    total_results = (await count1) + (await count2)
-
+    count1 = await Media.count_documents(filter_query)
+    count2 = await Media2.count_documents(filter_query)
+    total_results = count1 + count2
+    
     # 🔧 ᴇɴꜱᴜʀᴇ ᴇᴠᴇɴ ᴍᴀx_ʀᴇꜱᴜʟᴛꜱ
     if max_results % 2 != 0:
         logger.info(f"📊 ᴀᴅᴊᴜꜱᴛɪɴɢ ᴍᴀx_ʀᴇꜱᴜʟᴛꜱ ꜰʀᴏᴍ {max_results} ᴛᴏ {max_results+1}")
@@ -151,7 +151,7 @@ async def get_search_results(query, file_type=None, max_results=10, offset=0, fi
     if len(fileList2) < max_results:
         next_offset = offset + len(fileList2)
         remaining = max_results - len(fileList2)
-        cursorSkipper = max(0, next_offset - (await count2))
+        cursorSkipper = max(0, next_offset - count2)
         cursor.skip(cursorSkipper).limit(remaining)
         fileList1 = await cursor.to_list(length=remaining)
         files = fileList2 + fileList1
@@ -196,13 +196,15 @@ async def get_bad_files(query, file_type=None, filter=False):
         filter_query['file_type'] = file_type
 
     # 🚀 ᴘᴀʀᴀʟʟᴇʟ Qᴜᴇʀɪᴇꜱ
-    count1 = Media.count_documents(filter_query)
-    count2 = Media2.count_documents(filter_query)
+    count1 = await Media.count_documents(filter_query)
+    count2 = await Media2.count_documents(filter_query)
+
     cursor = Media.find(filter_query).sort('$natural', -1)
     cursor2 = Media2.find(filter_query).sort('$natural', -1)
     
-    files2 = await cursor2.to_list(length=await count2)
-    files1 = await cursor.to_list(length=await count1)
+    files2 = await cursor2.to_list(length=count2)
+    files1 = await cursor.to_list(length=count1)
+    
     files = files2 + files1
     
     logger.info(f"📊 ᴛᴏᴛᴀʟ ʙᴀᴅ ꜰɪʟᴇꜱ ꜰᴏᴜɴᴅ: {len(files)}")

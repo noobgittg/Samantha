@@ -289,15 +289,3 @@ async def group_broadcast(bot: Client, message: Message):
     # ⚡ Log completion
     logger.info(f"Group broadcast completed: {progress.success}/{total_chats} success")
 
-# ⚡ Error handler decorator
-def handle_broadcast_errors(func):
-    async def wrapper(bot, message):
-        try:
-            return await func(bot, message)
-        except FloodWait as e:
-            await message.reply_text(f"**⚠️ ꜰʟᴏᴏᴅ ᴡᴀɪᴛ**\n\nᴩʟᴇᴀꜱᴇ ᴡᴀɪᴛ `{e.value}` ꜱᴇᴄᴏɴᴅꜱ ʙᴇꜰᴏʀᴇ ʀᴇᴛʀʏɪɴɢ.")
-            logger.warning(f"Flood wait in broadcast: {e.value}s")
-        except Exception as e:
-            await message.reply_text(f"**❌ ʙʀᴏᴀᴅᴄᴀꜱᴛ ᴇʀʀᴏʀ**\n\n`{str(e)}`")
-            logger.error(f"Broadcast error: {e}", exc_info=True)
-    return wrapper

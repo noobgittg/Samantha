@@ -4,6 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatType
 import logging
+from info import *
 
 logger = logging.getLogger(__name__)
 

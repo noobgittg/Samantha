@@ -109,7 +109,9 @@ class Bot(Client):
         time = now.strftime("%H:%M:%S %p")
         await self.send_message(chat_id=LOG_CHANNEL, text=script.RESTART_TXT.format(today, time))
         await self.send_message(1404622369, text="ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ 🤖✨")
-        asyncio.create_task(keep_alive())
+        await asyncio.gather(*(self.send_message(admin, text="ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ ✨") for admin in ADMINS))asyncio.create_task(keep_alive())
+        for admin in ADMINS:
+            await self.send_message(admin, text="ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ.✨")
         asyncio.create_task(keepalive())
         
         client = webserver.AppRunner(await bot_run())
@@ -128,14 +130,12 @@ class Bot(Client):
         offset: int = 0,
     ) -> Optional[AsyncGenerator["types.Message", None]]:
         current = offset
-        while True:
-            new_diff = min(200, limit - current)
-            if new_diff <= 0:
-                return
-            messages = await self.get_messages(chat_id, list(range(current, current+new_diff+1)))
-            for message in messages:
-                yield message
-                current += 1
-
-app = Bot()
-app.run()
+        while current < limit:
+            batch_size = min(200, limit - current)
+            ids = list(range(current, current + batch_size))
+            messages = await self.get_messages(chat_id, ids)
+            for msg in messages:
+                yield msg
+            current += len(messages)
+            
+Bot().run()

@@ -1,31 +1,63 @@
+# Core Framework
 pyrofork==2.3.45
 Tgcrypto==1.2.5
+
+# Database
 pymongo[srv]==4.6.3
-marshmallow==3.20.1
 motor==3.3.2
 umongo==3.1.0
+marshmallow==3.20.1
+
+# HTTP & Networking
 requests==2.32.3
-beautifulsoup4==4.12.3
 aiohttp==3.9.5
 httpx==0.27.0
-pytz==2024.1
-psutil==5.9.8
-aiofiles==23.2.1
-python-dotenv==1.0.1
-pyromod==2.1.2
-git+https://github.com/Joelkb/cinemagoer
 
-# ꜰᴀꜱᴛᴇʀ ᴊꜱᴏɴ ᴘʀᴏᴄᴇꜱꜱɪɴɢ
+# Web Scraping & Parsing
+beautifulsoup4==4.12.3
+bs4==0.0.2
+lxml==5.2.2
+
+# Image Processing & Media
+Pillow==10.3.0
+cryptg==0.4.0
+
+# System & Utilities
+psutil==5.9.8
+pytz==2024.1
+python-dotenv==1.0.1
+aiofiles==23.2.1
+asyncio==3.4.3
+
+# IMDB & Movie Info
+git+https://github.com/Joelkb/cinemagoer.git
+
+# Additional Utilities
+chardet==5.2.0
+pyqrcode==1.2.1
+pypng==0.20220715.0
+qrcode==7.4.2
+Pygments==2.17.2
+
+# Progress Bars & Display
+tqdm==4.66.4
+rich==13.7.1
+
+# Security
+cryptography==42.0.5
+
+# Backup & Compression
+zstandard==0.22.0
+
+# Rate Limiting
+slowapi==0.1.9
+
+# JSON & Data Handling
+orjson==3.10.3
 ujson==5.9.0
 
-# ʙᴇᴛᴛᴇʀ ᴄᴏᴍᴘʀᴇꜱꜱɪᴏɴ
-brotli==1.1.0
+# Template Engine
+jinja2==3.1.3
 
-# ᴇɴʜᴀɴᴄᴇᴅ ʟᴏɢɢɪɴɢ
-colorlog==6.8.2
-
-# ᴘʀᴏᴄᴇꜱꜱ ᴍᴏɴɪᴛᴏʀɪɴɢ
-psutil==5.9.8
-
-# ᴀꜱʏɴᴄ ꜱᴜᴘᴘᴏʀᴛ
-asyncio==3.4.3
+# Caching (Memory based - No Redis)
+cachetools==5.3.3

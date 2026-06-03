@@ -245,9 +245,7 @@ async def index_files_to_db(last_msg_id, chat, msg, bot):
             skip = getattr(temp, 'CURRENT', 0)
             temp.CANCEL = False
 
-            # Correct iteration: start from last_msg_id and move backwards (older messages)
-            # Using offset_id = last_msg_id, limit = 0 (unlimited)
-            async for message in bot.iter_messages(chat, offset_id=last_msg_id, limit=0, reverse=False):
+            async for message in bot.iter_messages(chat, offset_id=last_msg_id, temp.CURRENT):
                 if temp.CANCEL:
                     await msg.edit(
                         f"❌ ɪɴᴅᴇxɪɴɢ ᴄᴀɴᴄᴇʟʟᴇᴅ!\n\n"

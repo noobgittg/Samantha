@@ -99,25 +99,7 @@ async def save_file(media):
             logger.warning(f"⚠️ {getattr(media, 'file_name', 'ɴᴏ_ꜰɪʟᴇ')} ᴀʟʀᴇᴀᴅʏ ᴇxɪꜱᴛꜱ")
             return False, 0
 
-async def get_search_results(chat_id, query, file_type=None, max_results=10, offset=0, filter=False):
-    """🔍 ꜰᴀꜱᴛ ꜱᴇᴀʀᴄʜ ᴡɪᴛʜ ᴄᴀᴄʜᴇ ꜱᴜᴘᴘᴏʀᴛ"""
-    
-    # 📊 ɢᴇᴛ ꜱᴇᴛᴛɪɴɢꜱ
-    if chat_id is not None:
-        settings = await get_settings(int(chat_id))
-        try:
-            if settings['max_btn']:
-                max_results = 10
-            else:
-                max_results = int(MAX_B_TN)
-        except KeyError:
-            await save_group_settings(int(chat_id), 'max_btn', False)
-            settings = await get_settings(int(chat_id))
-            if settings['max_btn']:
-                max_results = 10
-            else:
-                max_results = int(MAX_B_TN)
-    
+async def get_search_results(query, file_type=None, max_results=10, offset=0, filter=False):
     # 🔍 ᴄᴀᴄʜᴇ ᴋᴇʏ ɢᴇɴᴇʀᴀᴛɪᴏɴ
     cache_key = f"{query}:{file_type}:{max_results}:{offset}"
     if cache_key in _cache:

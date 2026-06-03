@@ -10,126 +10,178 @@ logger = logging.getLogger(__name__)
 cache_time = 0 if AUTH_USERS or AUTH_CHANNEL else CACHE_TIME
 
 async def inline_users(query: InlineQuery):
-    logger.info(f"🔍 Inline query check for user {query.from_user.id if query.from_user else 'unknown'}")
+    """✅ ᴜꜱᴇʀ ᴀᴜᴛʜᴇɴᴛɪᴄᴀᴛɪᴏɴ ᴄʜᴇᴄᴋ"""
+    logger.info(f"🔍 ɪɴʟɪɴᴇ Qᴜᴇʀʏ ᴄʜᴇᴄᴋ ꜰᴏʀ ᴜꜱᴇʀ {query.from_user.id if query.from_user else 'ᴜɴᴋɴᴏᴡɴ'}")
+    
     if AUTH_USERS:
         if query.from_user and query.from_user.id in AUTH_USERS:
-            logger.info("✅ User authorized via AUTH_USERS")
+            logger.info("✅ ᴜꜱᴇʀ ᴀᴜᴛʜᴏʀɪᴢᴇᴅ ᴠɪᴀ ᴀᴜᴛʜ_ᴜꜱᴇʀꜱ")
             return True
         else:
-            logger.warning("❌ User not in AUTH_USERS")
+            logger.warning("❌ ᴜꜱᴇʀ ɴᴏᴛ ɪɴ ᴀᴜᴛʜ_ᴜꜱᴇʀꜱ")
             return False
+            
     if query.from_user and query.from_user.id not in temp.BANNED_USERS:
-        logger.info("✅ User not banned")
+        logger.info("✅ ᴜꜱᴇʀ ɴᴏᴛ ʙᴀɴɴᴇᴅ")
         return True
-    logger.warning("🚫 User banned or invalid")
+        
+    logger.warning("🚫 ᴜꜱᴇʀ ʙᴀɴɴᴇᴅ ᴏʀ ɪɴᴠᴀʟɪᴅ")
     return False
 
 @Client.on_inline_query()
 async def answer(bot, query):
-    logger.info(f"🌐 Handling inline query: {query.query} from user {query.from_user.id if query.from_user else 'unknown'}")
+    """🎯 ᴍᴀɪɴ ɪɴʟɪɴᴇ Qᴜᴇʀʏ ʜᴀɴᴅʟᴇʀ"""
+    logger.info(f"🌐 ʜᴀɴᴅʟɪɴɢ ɪɴʟɪɴᴇ Qᴜᴇʀʏ: '{query.query}' ꜰʀᴏᴍ ᴜꜱᴇʀ {query.from_user.id if query.from_user else 'ᴜɴᴋɴᴏᴡɴ'}")
+    
+    # 🔐 ᴀᴜᴛʜᴇɴᴛɪᴄᴀᴛɪᴏɴ ᴄʜᴇᴄᴋ
     if not await inline_users(query):
-        logger.warning("🚫 Unauthorized inline query - empty response")
-        await query.answer(results=[],
-                           cache_time=0,
-                           switch_pm_text='okDa',
-                           switch_pm_parameter="hehe")
+        logger.warning("🚫 ᴜɴᴀᴜᴛʜᴏʀɪᴢᴇᴅ ɪɴʟɪɴᴇ Qᴜᴇʀʏ - ᴇᴍᴘᴛʏ ʀᴇꜱᴘᴏɴꜱᴇ")
+        await query.answer(
+            results=[],
+            cache_time=0,
+            switch_pm_text='⚡ ᴜɴᴀᴜᴛʜᴏʀɪᴢᴇᴅ',
+            switch_pm_parameter="hehe"
+        )
         return
 
-    logger.info("📋 Checking subscription status...")
+    # 📢 ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ᴄʜᴇᴄᴋ
+    logger.info("📋 ᴄʜᴇᴄᴋɪɴɢ ꜱᴜʙꜱᴄʀɪᴘᴛɪᴏɴ ꜱᴛᴀᴛᴜꜱ...")
     invite_links = await is_subscribed(bot, query=query)
+    
     if AUTH_CHANNEL and len(invite_links) >= 1:
-        logger.warning("⚠️ Force subscribe required - empty response")
-        await query.answer(results=[],
+        logger.warning("⚠️ ꜰᴏʀᴄᴇ ꜱᴜʙꜱᴄʀɪʙᴇ ʀᴇQᴜɪʀᴇᴅ - ᴇᴍᴘᴛʏ ʀᴇꜱᴘᴏɴꜱᴇ")
+        await query.answer(
+            results=[],
             cache_time=0,
-            switch_pm_text='You have to subscribe my channel to use the bot',
-            switch_pm_parameter="subscribe")
+            switch_pm_text='📢 ᴘʟᴇᴀꜱᴇ ꜱᴜʙꜱᴄʀɪʙᴇ ᴛᴏ ᴜꜱᴇ ᴛʜɪꜱ ʙᴏᴛ',
+            switch_pm_parameter="subscribe"
+        )
         return
 
     results = []
-    logger.info(f"🔍 Parsing query: '{query.query}'")
+    logger.info(f"🔍 ᴘᴀʀꜱɪɴɢ Qᴜᴇʀʏ: '{query.query}'")
+    
+    # 🔄 ᴘᴀʀꜱᴇ Qᴜᴇʀʏ ᴡɪᴛʜ ꜰɪʟᴇ ᴛʏᴘᴇ
     if '|' in query.query:
         string, file_type = query.query.split('|', maxsplit=1)
         string = string.strip()
         file_type = file_type.strip().lower()
-        logger.info(f"📂 Parsed: string='{string}', file_type='{file_type}'")
+        logger.info(f"📂 ᴘᴀʀꜱᴇᴅ: ꜱᴛʀɪɴɢ='{string}', ꜰɪʟᴇ_ᴛʏᴘᴇ='{file_type}'")
     else:
         string = query.query.strip()
         file_type = None
-        logger.info(f"📂 Parsed: string='{string}', file_type=None")
+        logger.info(f"📂 ᴘᴀʀꜱᴇᴅ: ꜱᴛʀɪɴɢ='{string}', ꜰɪʟᴇ_ᴛʏᴘᴇ=ɴᴏɴᴇ")
 
     offset = int(query.offset or 0)
-    logger.info(f"📄 Offset: {offset}")
+    logger.info(f"📄 ᴏꜰꜰꜱᴇᴛ: {offset}")
     reply_markup = get_reply_markup(query=string)
-    logger.info("🔗 Generated reply markup")
+    logger.info("🔗 ɢᴇɴᴇʀᴀᴛᴇᴅ ʀᴇᴘʟʏ ᴍᴀʀᴋᴜᴘ")
 
-    logger.info(f"🗄️ Fetching search results for '{string}' (type: {file_type}, offset: {offset}, max: 10)")
-    files, next_offset, total = await get_search_results(string,
-                                                  file_type=file_type,
-                                                  max_results=10,
-                                                  offset=offset)
-    logger.info(f"📊 Search results: {len(files)} files, next_offset: {next_offset}, total: {total}")
+    # 🗄️ ꜰᴇᴛᴄʜ ꜱᴇᴀʀᴄʜ ʀᴇꜱᴜʟᴛꜱ
+    logger.info(f"🗄️ ꜰᴇᴛᴄʜɪɴɢ ꜱᴇᴀʀᴄʜ ʀᴇꜱᴜʟᴛꜱ ꜰᴏʀ '{string}' (ᴛʏᴘᴇ: {file_type}, ᴏꜰꜰꜱᴇᴛ: {offset})")
+    files, next_offset, total = await get_search_results(
+        query.from_user.id,
+        string,
+        file_type=file_type,
+        max_results=10,
+        offset=offset
+    )
+    logger.info(f"📊 ꜱᴇᴀʀᴄʜ ʀᴇꜱᴜʟᴛꜱ: {len(files)} ꜰɪʟᴇꜱ, ɴᴇxᴛ_ᴏꜰꜰꜱᴇᴛ: {next_offset}, ᴛᴏᴛᴀʟ: {total}")
 
+    # 📁 ᴘʀᴏᴄᴇꜱꜱ ᴇᴀᴄʜ ꜰɪʟᴇ
     for file in files:
-        logger.info(f"📁 Processing file: {file.file_name} (size: {file.file_size})")
+        logger.info(f"📁 ᴘʀᴏᴄᴇꜱꜱɪɴɢ ꜰɪʟᴇ: {file.file_name}")
         title = file.file_name
         size = get_size(file.file_size)
         f_caption = file.caption
+        
+        # ✏️ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ʜᴀɴᴅʟɪɴɢ
         if CUSTOM_FILE_CAPTION:
             try:
-                f_caption = CUSTOM_FILE_CAPTION.format(file_name='' if title is None else title,
-                                                      file_size='' if size is None else size,
-                                                      file_caption='' if f_caption is None else f_caption)
-                logger.info("✏️ Custom caption applied successfully")
+                f_caption = CUSTOM_FILE_CAPTION.format(
+                    file_name='' if title is None else title,
+                    file_size='' if size is None else size,
+                    file_caption='' if f_caption is None else f_caption
+                )
+                logger.info("✏️ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴀᴘᴘʟɪᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ")
             except Exception as e:
-                logger.exception(f"❌ Custom caption error: {e}")
-                f_caption = f_caption
+                logger.exception(f"❌ ᴄᴜꜱᴛᴏᴍ ᴄᴀᴘᴛɪᴏɴ ᴇʀʀᴏʀ: {e}")
+                f_caption = f_caption if f_caption else f"{file.file_name}"
+        
         if f_caption is None:
             f_caption = f"{file.file_name}"
+            
+        # 🔧 ꜰɪxᴇᴅ: ᴜꜱᴇ ᴛʜᴇ ꜰɪʟᴇ_ɪᴅ ᴅɪʀᴇᴄᴛʟʏ ꜰʀᴏᴍ ᴅᴀᴛᴀʙᴀꜱᴇ
+        # ᴛʜɪꜱ ꜰɪxᴇꜱ ᴛʜᴇ ᴍᴅ5_ᴄʜᴇᴄᴋꜱᴜᴍ_ɪɴᴠᴀʟɪᴅ ᴇʀʀᴏʀ
         results.append(
             InlineQueryResultCachedDocument(
                 title=file.file_name,
-                document_file_id=file.file_id,
+                document_file_id=file.file_id,  # ᴜꜱᴇ ꜱᴛᴏʀᴇᴅ ꜰɪʟᴇ_ɪᴅ
                 caption=f_caption,
-                description=f'Size: {get_size(file.file_size)}\nType: {file.file_type}',
-                reply_markup=reply_markup))
-        logger.info(f"✅ Added result for {file.file_name}")
+                description=f'📦 ꜱɪᴢᴇ: {get_size(file.file_size)}\n🎬 ᴛʏᴘᴇ: {file.file_type}',
+                reply_markup=reply_markup
+            )
+        )
+        logger.info(f"✅ ᴀᴅᴅᴇᴅ ʀᴇꜱᴜʟᴛ ꜰᴏʀ {file.file_name}")
 
+    # 📤 ꜱᴇɴᴅ ʀᴇꜱᴘᴏɴꜱᴇ
     if results:
-        switch_pm_text = f"{emoji.FILE_FOLDER} Results - {total}"
+        switch_pm_text = f"📁 ʀᴇꜱᴜʟᴛꜱ - {total}"
         if string:
-            switch_pm_text += f" for {string}"
-        logger.info(f"📤 Answering with {len(results)} results | Switch PM: {switch_pm_text}")
+            switch_pm_text += f" ꜰᴏʀ {string}"
+            
+        logger.info(f"📤 ᴀɴꜱᴡᴇʀɪɴɢ ᴡɪᴛʜ {len(results)} ʀᴇꜱᴜʟᴛꜱ | ꜱᴡɪᴛᴄʜ ᴘᴍ: {switch_pm_text}")
+        
         try:
-            await query.answer(results=results,
-                               is_personal=True,
-                               cache_time=cache_time,
-                               switch_pm_text=switch_pm_text,
-                               switch_pm_parameter="start",
-                               next_offset=str(next_offset))
-            logger.info("✅ Inline query answered successfully")
+            await query.answer(
+                results=results,
+                is_personal=True,
+                cache_time=cache_time,
+                switch_pm_text=switch_pm_text,
+                switch_pm_parameter="start",
+                next_offset=str(next_offset) if next_offset else ""
+            )
+            logger.info("✅ ɪɴʟɪɴᴇ Qᴜᴇʀʏ ᴀɴꜱᴡᴇʀᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ")
+            
         except QueryIdInvalid:
-            logger.warning("⚠️ Query ID invalid - skipping answer")
-            pass
+            logger.warning("⚠️ Qᴜᴇʀʏ ɪᴅ ɪɴᴠᴀʟɪᴅ - ꜱᴋɪᴘᴘɪɴɢ")
+            
         except Exception as e:
-            logger.exception(f"❌ Error in query.answer: {e}")
-            # Fallback: Answer with error info if needed, but keep empty for now
-            await query.answer(results=[], cache_time=0, switch_pm_text=f'❌ Error: {str(e)[:50]}...', switch_pm_parameter="error")
+            logger.exception(f"❌ ᴇʀʀᴏʀ ɪɴ Qᴜᴇʀʏ.ᴀɴꜱᴡᴇʀ: {e}")
+            # ꜰᴀʟʟʙᴀᴄᴋ ᴡɪᴛʜ ᴇʀʀᴏʀ ɪɴꜰᴏ
+            try:
+                await query.answer(
+                    results=[],
+                    cache_time=0,
+                    switch_pm_text=f'❌ ᴇʀʀᴏʀ: {str(e)[:40]}...',
+                    switch_pm_parameter="error"
+                )
+            except:
+                pass
     else:
-        switch_pm_text = f'{emoji.CROSS_MARK} No results'
+        switch_pm_text = f'❌ ɴᴏ ʀᴇꜱᴜʟᴛꜱ'
         if string:
-            switch_pm_text += f' for "{string}"'
-        logger.info(f"📭 No results - answering empty with: {switch_pm_text}")
-        await query.answer(results=[],
-                           is_personal=True,
-                           cache_time=cache_time,
-                           switch_pm_text=switch_pm_text,
-                           switch_pm_parameter="okay")
+            switch_pm_text += f' ꜰᴏʀ "{string}"'
+            
+        logger.info(f"📭 ɴᴏ ʀᴇꜱᴜʟᴛꜱ - ᴀɴꜱᴡᴇʀɪɴɢ ᴇᴍᴘᴛʏ ᴡɪᴛʜ: {switch_pm_text}")
+        
+        await query.answer(
+            results=[],
+            is_personal=True,
+            cache_time=cache_time,
+            switch_pm_text=switch_pm_text,
+            switch_pm_parameter="okay"
+        )
 
 
 def get_reply_markup(query):
+    """🔘 ɢᴇɴᴇʀᴀᴛᴇ ʀᴇᴘʟʏ ᴍᴀʀᴋᴜᴘ ꜰᴏʀ ɪɴʟɪɴᴇ ʀᴇꜱᴜʟᴛꜱ"""
     buttons = [
         [
-            InlineKeyboardButton('Search again', switch_inline_query_current_chat=query)
+            InlineKeyboardButton('🔄 ꜱᴇᴀʀᴄʜ ᴀɢᴀɪɴ', switch_inline_query_current_chat=query)
+        ],
+        [
+            InlineKeyboardButton('🔍 ᴀᴅᴠᴀɴᴄᴇᴅ ꜱᴇᴀʀᴄʜ', switch_inline_query_current_chat='')
         ]
-        ]
+    ]
     return InlineKeyboardMarkup(buttons)

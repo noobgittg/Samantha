@@ -863,14 +863,10 @@ async def auto_ffilter(client, msg, spoll=False):
     if not spoll:
         message = msg
         settings = await get_settings(message.chat.id)
-        if message.text.startswith("/"):
-            return
-        if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
-            return
-        if re.search(r'(?im)(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-z0-9_]{5,32}\b', message.text):
+        if getattr(message, "forward_date", None) or (message.text and (message.text.startswith(("/", "!", ".", ",")) or re.match(r"^[\U0001F300-\U0010FFFF]", message.text) or re.search(r"(?:https?://|www\.|t\.me/|telegram\.dog/)\S+|@[a-zA-Z0-9_]{5,32}\b", message.text))):
             await message.delete()
             return
-        if len(message.text) < 50:
+        if len(message.text) < 100:
             search = message.text
             files, offset, total_results = await get_search_results(search, offset=0, filter=True)
             if not files:

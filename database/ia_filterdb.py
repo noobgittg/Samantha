@@ -273,7 +273,7 @@ RETURN_THRESHOLD_MB = 250  # switch back to primary if space recovers
 
 async def get_db_free_space():
     try:
-        stats = await clientDB.command("dbStats")
+        stats = await db.command("dbStats")
         used_mb = (stats["dataSize"] + stats["indexSize"]) / (1024 * 1024)
         free_mb = round(DB_LIMIT_MB - used_mb, 2)
         return free_mb

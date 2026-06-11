@@ -264,6 +264,69 @@ def unpack_new_file_id(new_file_id):
     file_ref = encode_file_ref(decoded.file_reference)
     return file_id, file_ref
 
+
+# 📊 DB Space Configuration
+DB_LIMIT_MB = 512
+SWITCH_THRESHOLD_MB = 200
+RETURN_THRESHOLD_MB = 250  # switch back to primary if space recovers
+
+async def get_db_free_space():
+    try:
+        stats = await clientDB.command("dbStats")
+        used_mb = (stats["dataSize"] + stats["indexSize"]) / (1024 * 1024)
+        free_mb = round(DB_LIMIT_MB - used_mb, 2)
+        return free_mb
+    except Exception as e:
+        logger.error(f"❌ ꜰᴀɪʟᴇᴅ ᴛᴏ ᴄʜᴇᴄᴋ ᴅʙ ꜱᴘᴀᴄᴇ: {e}")
+        return 0
+
+
+async def auto_switch_db():
+    global saveMedia
+
+    try:
+        free_mb = await get_db_free_space()
+
+        current_db = (
+            "ᴘʀɪᴍᴀʀʏ"
+            if tempDict.get("indexDB") == DATABASE_URI
+            else "ꜱᴇᴄᴏɴᴅᴀʀʏ"
+        )
+
+        if (
+            free_mb <= SWITCH_THRESHOLD_MB
+            and tempDict.get("indexDB") == DATABASE_URI
+        ):
+
+            tempDict["indexDB"] = SECONDDB_URI
+            saveMedia = Media2
+
+            logger.warning(
+                f"🔄 ᴅʙ ꜱᴡɪᴛᴄʜᴇᴅ ➜ ꜱᴇᴄᴏɴᴅᴀʀʏ\n"
+                f"📦 ꜰʀᴇᴇ ꜱᴘᴀᴄᴇ: {free_mb} ᴍʙ\n"
+                f"⚠️ ᴘʀɪᴍᴀʀʏ ᴅʙ ɴᴇᴀʀʟʏ ꜰᴜʟʟ"
+            )
+
+        elif (
+            free_mb >= RETURN_THRESHOLD_MB
+            and tempDict.get("indexDB") == SECONDDB_URI
+        ):
+
+            tempDict["indexDB"] = DATABASE_URI
+            saveMedia = Media
+
+            logger.info(
+                f"✅ ᴅʙ ꜱᴡɪᴛᴄʜᴇᴅ ➜ ᴘʀɪᴍᴀʀʏ\n"
+                f"📦 ꜰʀᴇᴇ ꜱᴘᴀᴄᴇ: {free_mb} ᴍʙ\n"
+                f"🚀 ᴘʀɪᴍᴀʀʏ ᴅʙ ʀᴇꜱᴛᴏʀᴇᴅ"
+            )
+
+        return free_mb
+
+    except Exception as e:
+        logger.error(f"❌ ᴅʙ ꜱᴡɪᴛᴄʜ ᴇʀʀᴏʀ: {e}")
+        return 0
+
 # 🧹 ᴄᴀᴄʜᴇ ᴄʟᴇᴀɴᴇʀ ᴜᴛɪʟɪᴛʏ now use less
 async def clear_cache():
     """🗑️ ᴄʟᴇᴀʀ ᴄᴀᴄʜᴇ"""

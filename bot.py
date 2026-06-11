@@ -27,6 +27,26 @@ from os import environ
 from aiohttp import web as webserver
 from sample_info import tempDict
 
+
+from database.ia_filterdb import auto_switch_db
+
+async def db_monitor():
+    while True:
+        try:
+            free_mb = await auto_switch_db()
+
+            logging.info(
+                f"📊 ᴅʙ ᴍᴏɴɪᴛᴏʀ | "
+                f"ᴀᴄᴛɪᴠᴇ: {'ᴘʀɪᴍᴀʀʏ' if tempDict.get('indexDB') == DATABASE_URI else 'ꜱᴇᴄᴏɴᴅᴀʀʏ'} | "
+                f"ꜰʀᴇᴇ: {free_mb} ᴍʙ"
+            )
+
+        except Exception as e:
+            logging.error(f"❌ ᴅʙ ᴍᴏɴɪᴛᴏʀ ᴇʀʀᴏʀ: {e}")
+
+        await asyncio.sleep(300)
+
+
 async def keep_alive():
     async with aiohttp.ClientSession() as session:
         while True:
@@ -73,29 +93,6 @@ class Bot(Client):
         temp.BANNED_USERS = b_users
         temp.BANNED_CHATS = b_chats
         await super().start()
-        await Media.ensure_indexes()
-        await Media2.ensure_indexes()
-        stats = await clientDB.command("dbStats")
-        used_mb = ((stats["dataSize"] + stats["indexSize"]) / (1024 * 1024))
-        free_mb = round(512 - used_mb, 2)
-        tempDict["indexDB"] = DATABASE_URI
-        if free_mb < 200:
-            if SECONDDB_URI:
-                tempDict["indexDB"] = SECONDDB_URI
-                logging.info(
-                    f"🔄 ᴅʙ sᴡɪᴛᴄʜᴇᴅ → sᴇᴄᴏɴᴅᴀʀʏ | ғʀᴇᴇ sᴘᴀᴄᴇ: {free_mb} ᴍʙ"
-                )
-            else:
-                logging.error(
-                    "❌ sᴇᴄᴏɴᴅᴀʀʏ ᴅʙ ɴᴏᴛ ᴄᴏɴғɪɢᴜʀᴇᴅ | ʟᴏᴡ sᴘᴀᴄᴇ ᴏɴ ᴘʀɪᴍᴀʀʏ ᴅʙ"
-                )
-                raise SystemExit(1)
-        else:
-            logging.info(
-                f"✅ ᴘʀɪᴍᴀʀʏ ᴅʙ sᴇʟᴇᴄᴛᴇᴅ | ғʀᴇᴇ sᴘᴀᴄᴇ: {free_mb} ᴍʙ"
-            )
-
-        await choose_mediaDB()
         me = await self.get_me()
         temp.ME = me.id
         temp.U_NAME = me.username
@@ -112,6 +109,7 @@ class Bot(Client):
         await asyncio.gather(*(self.send_message(admin, text="ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ ✨") for admin in ADMINS))
         
         asyncio.create_task(keep_alive())
+        asyncio.create_task(db_monitor())
         
         for admin in ADMINS:
             await self.send_message(admin, text="ʙᴏᴛ ʀᴇsᴛᴀʀᴛᴇᴅ.✨")

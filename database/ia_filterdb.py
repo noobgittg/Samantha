@@ -68,6 +68,7 @@ async def choose_mediaDB():
 
 async def save_file(media):
     """💾 ꜱᴀᴠᴇ ꜰɪʟᴇ ᴛᴏ ᴅᴀᴛᴀʙᴀꜱᴇ"""
+    await auto_switch_db()
     file_id, file_ref = unpack_new_file_id(media.file_id)
     file_name = re.sub(r"(_|\-|\.|\+)", " ", str(media.file_name))
     

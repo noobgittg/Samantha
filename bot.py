@@ -21,14 +21,10 @@ from pyrogram import types
 from Script import script 
 from datetime import date, datetime 
 import pytz
-
 from plugins.webcode import bot_run
 from os import environ
 from aiohttp import web as webserver
 from sample_info import tempDict
-
-
-from database.ia_filterdb import auto_switch_db
 
 async def db_monitor():
     while True:
